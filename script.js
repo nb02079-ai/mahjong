@@ -77,6 +77,7 @@ let playerHand = [];
 let drawnTile = null;
 
 let selectedTileIndex = null;
+let drawnTileSelected = false;
 
 let turnCount = 0;
 
