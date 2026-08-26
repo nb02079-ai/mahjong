@@ -1134,7 +1134,7 @@ function renderHand() {
 }
 
 /* =========================================================
-   23. 쯔모패 렌더링
+   쯔모패 렌더링
 ========================================================= */
 
 function renderDrawnTile() {
@@ -1153,15 +1153,38 @@ function renderDrawnTile() {
         document.createElement("div");
 
 
-    tile.className =
-        "tile drawn";
+    tile.classList.add(
+        "tile",
+        "drawn"
+    );
+
+
+    /*
+        쯔모패가 도라인지 확인
+    */
+
+    const activeDoraTiles =
+        getActiveDoraTiles();
+
+
+    if (
+        activeDoraTiles.includes(drawnTile)
+    ) {
+
+        tile.classList.add(
+            "dora-highlight"
+        );
+
+    }
 
 
     tile.innerHTML =
         `<span>${drawnTile}</span>`;
 
 
-    drawnTileElement.appendChild(tile);
+    drawnTileElement.appendChild(
+        tile
+    );
 
 }
 
