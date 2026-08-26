@@ -1011,6 +1011,47 @@ function removeKanChoices() {
 }
 
 /* =========================================================
+   쯔모 후 액션 검사
+========================================================= */
+
+function checkActionsAfterDraw() {
+
+    /*
+        화료 가능 여부
+    */
+
+    if (
+        drawnTile !== null &&
+        canWin([
+            ...playerHand,
+            drawnTile
+        ])
+    ) {
+
+        winButton.classList.remove(
+            "hidden"
+        );
+
+    }
+
+
+    /*
+        깡 가능 여부
+    */
+
+    if (
+        getKanCandidates().length > 0
+    ) {
+
+        kanButton.classList.remove(
+            "hidden"
+        );
+
+    }
+
+}
+
+/* =========================================================
    17. 화료 판정
 ========================================================= */
 
