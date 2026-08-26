@@ -670,3 +670,48 @@ body {
 .kan-meld .tile:hover {
     transform: none;
 }
+
+/* =========================
+   KAN MELDS
+========================= */
+
+.kan-melds {
+    min-height: 80px;
+
+    display: flex;
+
+    justify-content: flex-start;
+
+    align-items: flex-end;
+
+    gap: 10px;
+
+    padding: 10px 5px;
+
+    margin-bottom: 5px;
+}
+
+.kan-meld {
+    display: flex;
+
+    gap: 2px;
+
+    padding-right: 15px;
+
+    border-right: 1px solid #3b3f44;
+}
+
+.kan-tile {
+    cursor: default;
+}
+
+.kan-tile:hover {
+    transform: none;
+
+    box-shadow:
+        0 5px 12px rgba(0, 0, 0, 0.25);
+}
+
+.kan-choice-button {
+    min-width: 90px;
+}
