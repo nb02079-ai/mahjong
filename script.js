@@ -770,74 +770,97 @@ function declareKan(kanTile) {
     const candidates =
         getKanCandidates();
 
-    /*
-        선택한 패가 실제로
-        깡 가능한지 확인
-    */
-
     if (!candidates.includes(kanTile)) {
-
-        setStatus(
-            "해당 패는 깡할 수 없습니다."
-        );
-
         return;
+    }
 
+    let handCount = 0;
+
+    playerHand.forEach(tile => {
+
+        if (tile === kanTile) {
+            handCount++;
+        }
+
+    });
+
+    /*
+        손패에 4장이 있는 경우
+        → 손패에서 4장 제거
+    */
+
+    if (handCount >= 4) {
+
+        let removed = 0;
+
+        playerHand =
+            playerHand.filter(tile => {
+
+                if (
+                    tile === kanTile &&
+                    removed < 4
+                ) {
+
+                    removed++;
+
+                    return false;
+                }
+
+                return true;
+            });
+
+    }
+
+    /*
+        손패 3장 + 쯔모 1장인 경우
+        → 손패 3장 제거 + 쯔모패 제거
+    */
+
+    else if (
+        handCount === 3 &&
+        drawnTile === kanTile
+    ) {
+
+        let removed = 0;
+
+        playerHand =
+            playerHand.filter(tile => {
+
+                if (
+                    tile === kanTile &&
+                    removed < 3
+                ) {
+
+                    removed++;
+
+                    return false;
+                }
+
+                return true;
+            });
+
+        drawnTile = null;
+
+    }
+
+    else {
+        return;
     }
 
 
     /*
-        선택한 패 4장 제거
+        공개된 깡 기록
     */
 
-    let removedCount = 0;
-
-    playerHand =
-        playerHand.filter(tile => {
-
-            if (
-                tile === kanTile &&
-                removedCount < 4
-            ) {
-
-                removedCount++;
-
-                return false;
-
-            }
-
-            return true;
-
-        });
+    kanMelds.push(kanTile);
 
 
     /*
-        쯔모패가 깡에 포함된 경우 제거
+        선택 상태 초기화
     */
-
-    if (drawnTile === kanTile) {
-
-        /*
-            손패에서 이미 4장을 제거했다면
-            쯔모패가 포함되어 있던 경우
-            손패에는 3장만 있었을 가능성이 있다.
-
-            따라서 실제 남은 패를 기준으로
-            다시 처리한다.
-        */
-
-    }
-
-
-    /*
-        현재 쯔모패 초기화
-    */
-
-    drawnTile = null;
-
-    drawnTileSelected = false;
 
     selectedTileIndex = null;
+    drawnTileSelected = false;
 
 
     /*
@@ -855,66 +878,37 @@ function declareKan(kanTile) {
 
 
     /*
-        깡은 쯔모 기회를 소비하지 않는다.
-        따라서 turnCount는 그대로 유지.
-    */
-
-
-    /*
-        패산에서 보충패
+        보충패
+        ※ turnCount 증가 없음
     */
 
     drawnTile =
         drawFromWall();
 
-
     if (!drawnTile) {
-
         return;
-
     }
 
-
-    /*
-        손패 정렬
-    */
 
     playerHand =
         sortHand(playerHand);
 
 
-    /*
-        버튼 초기화
-    */
-
-    kanButton.classList.add(
-        "hidden"
-    );
-
-    winButton.classList.add(
-        "hidden"
-    );
+    removeKanChoices();
 
 
-    /*
-        화면 갱신
-    */
+    kanButton.classList.add("hidden");
+    winButton.classList.add("hidden");
+
 
     renderAll();
 
 
-    /*
-        보충패를 받은 뒤
-        화료 / 추가 깡 검사
-    */
-
     checkActionsAfterDraw();
-
 
     setStatus(
         `${kanCount}번째 깡! 보충패를 뽑았습니다.`
     );
-
 }
 
 /* =========================================================
