@@ -714,18 +714,8 @@ function showKanSelection() {
         getKanCandidates();
 
     if (candidates.length === 0) {
-
-        setStatus(
-            "현재 깡할 수 있는 패가 없습니다."
-        );
-
         return;
     }
-
-    /*
-        깡 가능한 패가 하나뿐이면
-        바로 실행
-    */
 
     if (candidates.length === 1) {
 
@@ -733,11 +723,6 @@ function showKanSelection() {
 
         return;
     }
-
-    /*
-        여러 종류의 깡이 가능할 경우
-        선택 버튼을 생성
-    */
 
     setStatus(
         "깡할 패를 선택하세요."
@@ -774,7 +759,6 @@ function showKanSelection() {
             .appendChild(button);
 
     });
-
 }
 
 /* =========================================================
