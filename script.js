@@ -490,12 +490,36 @@ function drawTile() {
 
 function selectTile(index) {
 
+    // 쯔모패 선택 해제
+    drawnTileSelected = false;
+
+    // 손패 선택
     selectedTileIndex = index;
 
-    renderHand();
+    renderAll();
 
 }
 
+/* =========================================================
+   쯔모패 선택
+========================================================= */
+
+function selectDrawnTile() {
+
+    if (drawnTile === null) {
+        return;
+    }
+
+    // 손패 선택 해제
+    selectedTileIndex = null;
+
+    // 쯔모패 선택
+    drawnTileSelected = true;
+
+    renderAll();
+
+    setStatus("쯔모한 패가 선택되었습니다.");
+}
 
 /* =========================================================
    13. 타패
