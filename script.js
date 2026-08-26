@@ -777,6 +777,11 @@ function showKanSelection() {
 ========================================================= */
 
 function declareKan(kanTile) {
+   
+    if (gameEnded) {
+        return;
+    }
+
 
     const candidates =
         getKanCandidates();
