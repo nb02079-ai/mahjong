@@ -410,6 +410,9 @@ function discardTile() {
         // 쯔모한 패를 손패에 추가
         playerHand.push(drawnTile);
 
+        playerHand =
+             sortHand(playerHand);
+
     }
 
     // 아무 패도 선택하지 않은 경우
