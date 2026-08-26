@@ -148,13 +148,12 @@ function startGame() {
 
     renderAll();
 
-    // 게임 시작 후 첫 쯔모
+    setStatus("게임 시작!");
+
+    // 시작 후 첫 쯔모
     setTimeout(() => {
-
         drawTile();
-
     }, 300);
-
 }
 
 
