@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Solo Mahjong</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="game-container">
+
+        <!-- =========================
+             HEADER
+        ========================== -->
+        <header class="game-header">
+
+            <div class="game-title">
+                <h1>SOLO MAHJONG</h1>
+                <p>1인용 마작 퍼즐</p>
+            </div>
+
+            <div class="game-info">
+
+                <div class="info-box">
+                    <span class="info-label">SCORE</span>
+                    <span id="score" class="info-value">0</span>
+                </div>
+
+                <div class="info-box">
+                    <span class="info-label">TURNS LEFT</span>
+                    <span id="turns-left" class="info-value">15</span>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =========================
+             GAME BOARD
+        ========================== -->
+        <main class="game-board">
+
+            <!-- =========================
+                 DORA AREA
+            ========================== -->
+            <section class="dora-section">
+
+                <div class="section-title">
+                    <span>DORA</span>
+                    <span id="dora-count">1</span>
+                </div>
+
+                <div id="dora-indicators" class="dora-indicators">
+
+                    <!-- 최초 도라 표시패 -->
+                    <div class="tile dora-tile">
+                        <span>🀄</span>
+                    </div>
+
+                    <!-- 깡을 하면 아래에 도라 표시패가 추가됨 -->
+
+                </div>
+
+            </section>
+
+
+            <!-- =========================
+                 GAME STATUS
+            ========================== -->
+            <section class="status-section">
+
+                <div id="game-status" class="game-status">
+                    패를 선택하여 버려주세요.
+                </div>
+
+            </section>
+
+
+            <!-- =========================
+                 PLAYER HAND
+            ========================== -->
+            <section class="hand-section">
+
+                <div class="section-title">
+                    <span>YOUR HAND</span>
+                    <span id="hand-count">13</span>
+                </div>
+
+                <div id="player-hand" class="player-hand">
+
+                    <!--
+                    실제 패는 JavaScript에서 생성
+
+                    예시:
+                    <button class="tile">
+                        <span>🀇</span>
+                    </button>
+                    -->
+
+                    <button class="tile selected">
+                        <span>🀇</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀈</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀉</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀙</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀚</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀛</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀐</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀑</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀒</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀀</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀀</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀅</span>
+                    </button>
+
+                    <button class="tile">
+                        <span>🀅</span>
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- =========================
+                 DRAWN TILE
+            ========================== -->
+            <section class="draw-section">
+
+                <div class="section-title">
+                    <span>DRAWN TILE</span>
+                </div>
+
+                <div id="drawn-tile" class="drawn-tile-container">
+
+                    <div class="tile drawn">
+                        <span>🀋</span>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =========================
+                 ACTION BUTTONS
+            ========================== -->
+            <section class="action-section">
+
+                <button id="discard-button" class="action-button discard-button">
+                    타패
+                </button>
+
+                <button id="kan-button" class="action-button kan-button hidden">
+                    깡
+                </button>
+
+                <button id="win-button" class="action-button win-button hidden">
+                    화료
+                </button>
+
+            </section>
+
+        </main>
+
+
+        <!-- =========================
+             FOOTER
+        ========================== -->
+        <footer class="game-footer">
+
+            <div class="deck-info">
+                <span>WALL</span>
+                <span id="wall-count">133</span>
+            </div>
+
+            <div class="wild-info">
+
+                <span>WILD</span>
+
+                <div id="wild-count" class="wild-cards">
+                    <span class="wild-card">★</span>
+                    <span class="wild-card">★</span>
+                </div>
+
+            </div>
+
+        </footer>
+
+    </div>
+
+
+    <!--
+        나중에 JavaScript를 연결할 위치
+
+        <script src="script.js"></script>
+    -->
+
+</body>
+</html>
