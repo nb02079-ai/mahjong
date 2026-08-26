@@ -345,63 +345,46 @@ function selectTile(index) {
 function discardTile() {
 
     if (drawnTile === null) {
-
-        setStatus("먼저 패를 쯔모해야 합니다.");
-
+        setStatus("쯔모한 패가 없습니다.");
         return;
-
     }
 
+    let discardedTile;
 
-    /*
-        선택한 패가 있으면
-        그 패를 버리고
-        쯔모패를 손패에 넣는다.
-    */
-
+    // 손패에서 패를 선택한 경우
     if (selectedTileIndex !== null) {
 
-        const discarded =
+        discardedTile =
             playerHand.splice(
                 selectedTileIndex,
                 1
             )[0];
 
+        // 쯔모한 패를 손패에 추가
         playerHand.push(drawnTile);
 
-        console.log("타패:", discarded);
-
     }
 
-    /*
-        선택하지 않았다면
-        쯔모패 자체를 버린다.
-    */
-
+    // 아무 패도 선택하지 않은 경우
     else {
 
-        console.log("타패:", drawnTile);
-
+        // 쯔모패 자체를 버림
+        discardedTile = drawnTile;
     }
 
+    console.log("타패:", discardedTile);
 
+    // 상태 초기화
     drawnTile = null;
-
     selectedTileIndex = null;
 
+    // 액션 버튼 숨기기
     kanButton.classList.add("hidden");
-
     winButton.classList.add("hidden");
-
-    handCountElement.textContent =
-        playerHand.length;
 
     renderAll();
 
-    /*
-        다음 쯔모
-    */
-
+    // 15회 모두 사용했으면 종료
     if (turnCount >= MAX_TURNS) {
 
         endGame(
@@ -409,15 +392,14 @@ function discardTile() {
         );
 
         return;
-
     }
 
+    setStatus("다음 패를 뽑습니다.");
+
+    // 다음 쯔모
     setTimeout(() => {
-
         drawTile();
-
     }, 300);
-
 }
 
 
