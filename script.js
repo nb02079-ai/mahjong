@@ -1,0 +1,1084 @@
+/* =========================================================
+   SOLO MAHJONG
+   1인용 마작 게임 - 1차 프로토타입
+========================================================= */
+
+
+/* =========================================================
+   1. 게임 설정
+========================================================= */
+
+const MAX_TURNS = 15;
+const WILD_COUNT = 2;
+const DEAD_WALL_SIZE = 5;
+
+
+/* =========================================================
+   2. 마작패 정의
+========================================================= */
+
+/*
+    만수:
+    🀇 1만
+    🀈 2만
+    🀉 3만
+    ...
+    🀏 9만
+
+    통수:
+    🀙 1통
+    ...
+    🀡 9통
+
+    삭수:
+    🀐 1삭
+    ...
+    🀘 9삭
+
+    자패:
+    🀀 동
+    🀁 남
+    🀂 서
+    🀃 북
+    🀄 백
+    🀅 발
+    🀆 중
+*/
+
+
+const TILE_TYPES = [
+    // 만수
+    "🀇", "🀈", "🀉", "🀊", "🀋",
+    "🀌", "🀍", "🀎", "🀏",
+
+    // 통수
+    "🀙", "🀚", "🀛", "🀜", "🀝",
+    "🀞", "🀟", "🀠", "🀡",
+
+    // 삭수
+    "🀐", "🀑", "🀒", "🀓", "🀔",
+    "🀕", "🀖", "🀗", "🀘",
+
+    // 자패
+    "🀀", "🀁", "🀂", "🀃",
+    "🀄", "🀅", "🀆"
+];
+
+
+/* =========================================================
+   3. 게임 상태
+========================================================= */
+
+let wall = [];
+let deadWall = [];
+
+let playerHand = [];
+
+let drawnTile = null;
+
+let selectedTileIndex = null;
+
+let turnCount = 0;
+
+let doraIndicators = [];
+
+let kanCount = 0;
+
+let score = 0;
+
+
+/* =========================================================
+   4. DOM
+========================================================= */
+
+const playerHandElement =
+    document.getElementById("player-hand");
+
+const drawnTileElement =
+    document.getElementById("drawn-tile");
+
+const discardButton =
+    document.getElementById("discard-button");
+
+const kanButton =
+    document.getElementById("kan-button");
+
+const winButton =
+    document.getElementById("win-button");
+
+const scoreElement =
+    document.getElementById("score");
+
+const turnsLeftElement =
+    document.getElementById("turns-left");
+
+const wallCountElement =
+    document.getElementById("wall-count");
+
+const doraIndicatorsElement =
+    document.getElementById("dora-indicators");
+
+const doraCountElement =
+    document.getElementById("dora-count");
+
+const gameStatusElement =
+    document.getElementById("game-status");
+
+const handCountElement =
+    document.getElementById("hand-count");
+
+
+/* =========================================================
+   5. 게임 시작
+========================================================= */
+
+function startGame() {
+
+    console.log("게임 시작");
+
+    initializeTiles();
+
+    shuffle(wall);
+
+    createDeadWall();
+
+    drawInitialHand();
+
+    revealInitialDora();
+
+    renderAll();
+
+    setStatus("게임 시작! 패를 선택하여 버려주세요.");
+}
+
+
+/* =========================================================
+   6. 패 생성
+========================================================= */
+
+function initializeTiles() {
+
+    wall = [];
+
+    // 일반 마작패 136장
+    TILE_TYPES.forEach(tile => {
+
+        for (let i = 0; i < 4; i++) {
+
+            wall.push(tile);
+
+        }
+
+    });
+
+    // 와일드패 2장
+    for (let i = 0; i < WILD_COUNT; i++) {
+
+        wall.push("★");
+
+    }
+
+}
+
+
+/* =========================================================
+   7. 왕패 분리
+========================================================= */
+
+function createDeadWall() {
+
+    /*
+        일반 마작패 중 마지막 5장을 왕패로 분리.
+
+        왕패:
+        [0] 최초 도라 표시패
+        [1~4] 추가 도라 표시패
+    */
+
+    deadWall = wall.splice(
+        wall.length - DEAD_WALL_SIZE,
+        DEAD_WALL_SIZE
+    );
+
+}
+
+
+/* =========================================================
+   8. 초기 손패
+========================================================= */
+
+function drawInitialHand() {
+
+    playerHand = [];
+
+    for (let i = 0; i < 13; i++) {
+
+        playerHand.push(drawFromWall());
+
+    }
+
+}
+
+
+/* =========================================================
+   9. 도라 공개
+========================================================= */
+
+function revealInitialDora() {
+
+    const dora = deadWall.shift();
+
+    if (!dora) {
+
+        console.error("도라 표시패가 없습니다.");
+
+        return;
+
+    }
+
+    doraIndicators.push(dora);
+
+}
+
+
+/* =========================================================
+   10. 패산에서 패 뽑기
+========================================================= */
+
+function drawFromWall() {
+
+    if (wall.length === 0) {
+
+        endGame("패산이 모두 소진되었습니다.");
+
+        return null;
+
+    }
+
+    return wall.pop();
+
+}
+
+
+/* =========================================================
+   11. 일반 쯔모
+========================================================= */
+
+function drawTile() {
+
+    if (turnCount >= MAX_TURNS) {
+
+        endGame("15회의 쯔모 기회를 모두 사용했습니다.");
+
+        return;
+
+    }
+
+    drawnTile = drawFromWall();
+
+    if (!drawnTile) {
+
+        return;
+
+    }
+
+    turnCount++;
+
+    setStatus(
+        `${turnCount} / ${MAX_TURNS}번째 쯔모`
+    );
+
+    renderAll();
+
+    /*
+        쯔모 후:
+        13장 손패 + 쯔모패 = 14장
+
+        화료 가능한지 검사
+    */
+
+    if (canWin([...playerHand, drawnTile])) {
+
+        winButton.classList.remove("hidden");
+
+        setStatus(
+            "화료 가능한 패입니다!"
+        );
+
+    }
+
+    /*
+        깡 가능한지 검사
+    */
+
+    if (canKan()) {
+
+        kanButton.classList.remove("hidden");
+
+    }
+
+}
+
+
+/* =========================================================
+   12. 패 선택
+========================================================= */
+
+function selectTile(index) {
+
+    selectedTileIndex = index;
+
+    renderHand();
+
+}
+
+
+/* =========================================================
+   13. 타패
+========================================================= */
+
+function discardTile() {
+
+    if (drawnTile === null) {
+
+        setStatus("먼저 패를 쯔모해야 합니다.");
+
+        return;
+
+    }
+
+
+    /*
+        선택한 패가 있으면
+        그 패를 버리고
+        쯔모패를 손패에 넣는다.
+    */
+
+    if (selectedTileIndex !== null) {
+
+        const discarded =
+            playerHand.splice(
+                selectedTileIndex,
+                1
+            )[0];
+
+        playerHand.push(drawnTile);
+
+        console.log("타패:", discarded);
+
+    }
+
+    /*
+        선택하지 않았다면
+        쯔모패 자체를 버린다.
+    */
+
+    else {
+
+        console.log("타패:", drawnTile);
+
+    }
+
+
+    drawnTile = null;
+
+    selectedTileIndex = null;
+
+    kanButton.classList.add("hidden");
+
+    winButton.classList.add("hidden");
+
+    handCountElement.textContent =
+        playerHand.length;
+
+    renderAll();
+
+    /*
+        다음 쯔모
+    */
+
+    if (turnCount >= MAX_TURNS) {
+
+        endGame(
+            "15회의 쯔모 기회를 모두 사용했습니다."
+        );
+
+        return;
+
+    }
+
+    setTimeout(() => {
+
+        drawTile();
+
+    }, 300);
+
+}
+
+
+/* =========================================================
+   14. 깡 가능 여부
+========================================================= */
+
+function canKan() {
+
+    const tiles = [
+        ...playerHand
+    ];
+
+    if (drawnTile !== null) {
+
+        tiles.push(drawnTile);
+
+    }
+
+
+    /*
+        같은 패가 4장 있는지 검사
+    */
+
+    const counts = {};
+
+    tiles.forEach(tile => {
+
+        if (tile === "★") return;
+
+        counts[tile] =
+            (counts[tile] || 0) + 1;
+
+    });
+
+
+    return Object.values(counts)
+        .some(count => count >= 4);
+
+}
+
+
+/* =========================================================
+   15. 깡
+========================================================= */
+
+function declareKan() {
+
+    if (!canKan()) {
+
+        return;
+
+    }
+
+
+    const tiles = [
+        ...playerHand
+    ];
+
+    if (drawnTile !== null) {
+
+        tiles.push(drawnTile);
+
+    }
+
+
+    /*
+        4장이 모인 패 찾기
+    */
+
+    const counts = {};
+
+    tiles.forEach(tile => {
+
+        if (tile === "★") return;
+
+        counts[tile] =
+            (counts[tile] || 0) + 1;
+
+    });
+
+
+    const kanTile =
+        Object.keys(counts)
+            .find(tile => counts[tile] >= 4);
+
+
+    if (!kanTile) {
+
+        return;
+
+    }
+
+
+    /*
+        해당 패 4장을 손패에서 제거
+    */
+
+    playerHand =
+        playerHand.filter(
+            tile => tile !== kanTile
+        );
+
+
+    /*
+        현재 쯔모패 제거
+    */
+
+    drawnTile = null;
+
+
+    kanCount++;
+
+
+    /*
+        추가 도라 공개
+    */
+
+    revealKanDora();
+
+
+    /*
+        일반 패산에서 보충
+        ★ 중요:
+        turnCount를 증가시키지 않는다.
+    */
+
+    drawnTile = drawFromWall();
+
+
+    if (!drawnTile) {
+
+        return;
+
+    }
+
+
+    setStatus(
+        `${kanCount}번째 깡! 추가 도라가 공개되었습니다.`
+    );
+
+
+    /*
+        깡을 했으므로
+        추가 도라가 있는지 검사
+    */
+
+    renderAll();
+
+}
+
+
+/* =========================================================
+   16. 깡도라 공개
+========================================================= */
+
+function revealKanDora() {
+
+    if (doraIndicators.length >= 5) {
+
+        setStatus(
+            "더 이상 공개할 도라 표시패가 없습니다."
+        );
+
+        return;
+
+    }
+
+
+    const nextDora =
+        deadWall.shift();
+
+
+    if (!nextDora) {
+
+        console.error(
+            "추가 도라 표시패가 없습니다."
+        );
+
+        return;
+
+    }
+
+
+    doraIndicators.push(nextDora);
+
+}
+
+
+/* =========================================================
+   17. 화료 판정
+========================================================= */
+
+function canWin(hand) {
+
+    /*
+        현재는 기본적인
+        4멘츠 + 1머리 형태만 검사.
+
+        와일드패 / 치또이츠 /
+        국사무쌍 등은 다음 단계에서 추가.
+    */
+
+    if (hand.length !== 14) {
+
+        return false;
+
+    }
+
+
+    /*
+        와일드패가 있으면
+        일단 화료 가능성만 표시하지 않고
+        다음 단계에서 최적 조합 탐색.
+    */
+
+    if (hand.includes("★")) {
+
+        return false;
+
+    }
+
+
+    return isStandardHand(hand);
+
+}
+
+
+/* =========================================================
+   18. 기본형 화료 검사
+========================================================= */
+
+function isStandardHand(hand) {
+
+    const counts = countTiles(hand);
+
+
+    /*
+        모든 가능한 머리를 검사
+    */
+
+    for (const tile in counts) {
+
+        if (counts[tile] >= 2) {
+
+            counts[tile] -= 2;
+
+
+            if (canMakeFourMentsu(counts)) {
+
+                return true;
+
+            }
+
+
+            counts[tile] += 2;
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================================================
+   19. 멘츠 구성 가능 여부
+========================================================= */
+
+function canMakeFourMentsu(counts) {
+
+    const remaining =
+        Object.values(counts)
+            .reduce(
+                (sum, value) => sum + value,
+                0
+            );
+
+
+    if (remaining === 0) {
+
+        return true;
+
+    }
+
+
+    /*
+        가장 앞쪽의 패를 찾는다.
+    */
+
+    const tile =
+        Object.keys(counts)
+            .find(
+                key => counts[key] > 0
+            );
+
+
+    if (!tile) {
+
+        return true;
+
+    }
+
+
+    /*
+        1. 커쯔
+    */
+
+    if (counts[tile] >= 3) {
+
+        counts[tile] -= 3;
+
+
+        if (canMakeFourMentsu(counts)) {
+
+            return true;
+
+        }
+
+
+        counts[tile] += 3;
+
+    }
+
+
+    /*
+        2. 슌쯔
+        숫자패인지 확인
+    */
+
+    const index =
+        TILE_TYPES.indexOf(tile);
+
+
+    if (index >= 0 && index <= 26) {
+
+        const suitStart =
+            Math.floor(index / 9) * 9;
+
+        const number =
+            index % 9;
+
+
+        if (number <= 6) {
+
+            const tile2 =
+                TILE_TYPES[index + 1];
+
+            const tile3 =
+                TILE_TYPES[index + 2];
+
+
+            if (
+                counts[tile2] > 0 &&
+                counts[tile3] > 0
+            ) {
+
+                counts[tile]--;
+                counts[tile2]--;
+                counts[tile3]--;
+
+
+                if (canMakeFourMentsu(counts)) {
+
+                    return true;
+
+                }
+
+
+                counts[tile]++;
+                counts[tile2]++;
+                counts[tile3]++;
+
+            }
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================================================
+   20. 패 개수 계산
+========================================================= */
+
+function countTiles(hand) {
+
+    const counts = {};
+
+    hand.forEach(tile => {
+
+        counts[tile] =
+            (counts[tile] || 0) + 1;
+
+    });
+
+    return counts;
+
+}
+
+
+/* =========================================================
+   21. 전체 화면 렌더링
+========================================================= */
+
+function renderAll() {
+
+    renderHand();
+
+    renderDrawnTile();
+
+    renderDora();
+
+    renderInfo();
+
+}
+
+
+/* =========================================================
+   22. 손패 렌더링
+========================================================= */
+
+function renderHand() {
+
+    playerHandElement.innerHTML = "";
+
+
+    playerHand.forEach((tile, index) => {
+
+        const button =
+            document.createElement("button");
+
+
+        button.className = "tile";
+
+
+        if (index === selectedTileIndex) {
+
+            button.classList.add("selected");
+
+        }
+
+
+        button.innerHTML =
+            `<span>${tile}</span>`;
+
+
+        button.addEventListener(
+            "click",
+            () => selectTile(index)
+        );
+
+
+        playerHandElement.appendChild(button);
+
+    });
+
+
+    handCountElement.textContent =
+        playerHand.length;
+
+}
+
+
+/* =========================================================
+   23. 쯔모패 렌더링
+========================================================= */
+
+function renderDrawnTile() {
+
+    drawnTileElement.innerHTML = "";
+
+
+    if (!drawnTile) {
+
+        return;
+
+    }
+
+
+    const tile =
+        document.createElement("div");
+
+
+    tile.className =
+        "tile drawn";
+
+
+    tile.innerHTML =
+        `<span>${drawnTile}</span>`;
+
+
+    drawnTileElement.appendChild(tile);
+
+}
+
+
+/* =========================================================
+   24. 도라 렌더링
+========================================================= */
+
+function renderDora() {
+
+    doraIndicatorsElement.innerHTML = "";
+
+
+    doraIndicators.forEach(tile => {
+
+        const element =
+            document.createElement("div");
+
+
+        element.className =
+            "tile dora-tile";
+
+
+        element.innerHTML =
+            `<span>${tile}</span>`;
+
+
+        doraIndicatorsElement
+            .appendChild(element);
+
+    });
+
+
+    doraCountElement.textContent =
+        doraIndicators.length;
+
+}
+
+
+/* =========================================================
+   25. 게임 정보 렌더링
+========================================================= */
+
+function renderInfo() {
+
+    scoreElement.textContent =
+        score.toLocaleString();
+
+
+    turnsLeftElement.textContent =
+        Math.max(
+            0,
+            MAX_TURNS - turnCount
+        );
+
+
+    wallCountElement.textContent =
+        wall.length;
+
+}
+
+
+/* =========================================================
+   26. 상태 메시지
+========================================================= */
+
+function setStatus(message) {
+
+    gameStatusElement.textContent =
+        message;
+
+}
+
+
+/* =========================================================
+   27. 게임 종료
+========================================================= */
+
+function endGame(message) {
+
+    setStatus(message);
+
+    discardButton.disabled = true;
+
+    kanButton.classList.add("hidden");
+
+    winButton.classList.add("hidden");
+
+}
+
+
+/* =========================================================
+   28. 셔플
+========================================================= */
+
+function shuffle(array) {
+
+    for (
+        let i = array.length - 1;
+        i > 0;
+        i--
+    ) {
+
+        const j =
+            Math.floor(
+                Math.random() * (i + 1)
+            );
+
+
+        [
+            array[i],
+            array[j]
+        ] =
+        [
+            array[j],
+            array[i]
+        ];
+
+    }
+
+}
+
+
+/* =========================================================
+   29. 이벤트
+========================================================= */
+
+discardButton.addEventListener(
+    "click",
+    discardTile
+);
+
+
+kanButton.addEventListener(
+    "click",
+    declareKan
+);
+
+
+winButton.addEventListener(
+    "click",
+    () => {
+
+        /*
+            현재는 점수 계산 미구현.
+
+            다음 단계에서:
+            - 역 판정
+            - 부수
+            - 판수
+            - 도라
+            - 와일드패 최적화
+            - 자 쯔모 점수
+
+            를 연결한다.
+        */
+
+        setStatus(
+            "화료! (점수 계산은 다음 단계에서 구현)"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   30. 게임 실행
+========================================================= */
+
+startGame();
