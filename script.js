@@ -948,6 +948,21 @@ function revealKanDora() {
 
 }
 
+/* =========================================================
+   깡 선택 버튼 제거
+========================================================= */
+
+function removeKanChoices() {
+
+    document
+        .querySelectorAll(".kan-choice-button")
+        .forEach(button => {
+
+            button.remove();
+
+        });
+
+}
 
 /* =========================================================
    17. 화료 판정
