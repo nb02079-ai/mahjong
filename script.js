@@ -292,6 +292,89 @@ function revealInitialDora() {
 
 }
 
+/* =========================================================
+   실제 도라 계산
+========================================================= */
+
+function getDoraTile(indicator) {
+
+    const index =
+        TILE_TYPES.indexOf(indicator);
+
+
+    if (index === -1) {
+        return null;
+    }
+
+
+    /*
+        만수 / 통수 / 삭수
+    */
+
+    if (index >= 0 && index <= 26) {
+
+        const suitStart =
+            Math.floor(index / 9) * 9;
+
+        const number =
+            index - suitStart;
+
+
+        /*
+            9 → 1
+        */
+
+        const nextNumber =
+            (number + 1) % 9;
+
+
+        return TILE_TYPES[
+            suitStart + nextNumber
+        ];
+
+    }
+
+
+    /*
+        자패
+
+        동 → 남 → 서 → 북 → 동
+        백 → 발 → 중 → 백
+    */
+
+    if (index >= 27 && index <= 30) {
+
+        const windIndex =
+            index - 27;
+
+        const nextWind =
+            (windIndex + 1) % 4;
+
+        return TILE_TYPES[
+            27 + nextWind
+        ];
+
+    }
+
+
+    if (index >= 31 && index <= 33) {
+
+        const dragonIndex =
+            index - 31;
+
+        const nextDragon =
+            (dragonIndex + 1) % 3;
+
+        return TILE_TYPES[
+            31 + nextDragon
+        ];
+
+    }
+
+
+    return null;
+
+}
 
 /* =========================================================
    10. 패산에서 패 뽑기
