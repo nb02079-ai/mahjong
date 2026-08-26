@@ -664,43 +664,40 @@ function discardTile() {
 
 
 /* =========================================================
-   14. 깡 가능 여부
+   깡 가능한 패 찾기
 ========================================================= */
 
-function canKan() {
+function getKanCandidates() {
 
     const tiles = [
         ...playerHand
     ];
 
     if (drawnTile !== null) {
-
         tiles.push(drawnTile);
-
     }
-
-
-    /*
-        같은 패가 4장 있는지 검사
-    */
 
     const counts = {};
 
     tiles.forEach(tile => {
 
-        if (tile === "★") return;
+        // 와일드패는 깡에 사용할 수 없음
+        if (tile === "★") {
+            return;
+        }
 
         counts[tile] =
             (counts[tile] || 0) + 1;
 
     });
 
-
-    return Object.values(counts)
-        .some(count => count >= 4);
-
+    return Object.keys(counts)
+        .filter(tile => counts[tile] >= 4)
+        .sort(
+            (a, b) =>
+                getTileOrder(a) - getTileOrder(b)
+        );
 }
-
 
 /* =========================================================
    15. 깡
