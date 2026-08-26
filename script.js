@@ -377,6 +377,34 @@ function getDoraTile(indicator) {
 }
 
 /* =========================================================
+   현재 적용되는 모든 도라
+========================================================= */
+
+function getActiveDoraTiles() {
+
+    const doraTiles = [];
+
+
+    doraIndicators.forEach(indicator => {
+
+        const dora =
+            getDoraTile(indicator);
+
+
+        if (dora) {
+
+            doraTiles.push(dora);
+
+        }
+
+    });
+
+
+    return doraTiles;
+
+}
+
+/* =========================================================
    10. 패산에서 패 뽑기
 ========================================================= */
 
