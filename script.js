@@ -148,7 +148,13 @@ function startGame() {
 
     renderAll();
 
-    setStatus("게임 시작! 패를 선택하여 버려주세요.");
+    // 게임 시작 후 첫 쯔모
+    setTimeout(() => {
+
+        drawTile();
+
+    }, 300);
+
 }
 
 
