@@ -1603,6 +1603,41 @@ function shuffle(array) {
 
 }
 
+/* =========================================================
+   render kan melds
+========================================================= */
+
+function renderKanMelds() {
+
+    kanMeldsElement.innerHTML = "";
+
+    kanMelds.forEach(kanTile => {
+
+        const meld =
+            document.createElement("div");
+
+        meld.classList.add("kan-meld");
+
+        for (let i = 0; i < 4; i++) {
+
+            const tile =
+                document.createElement("div");
+
+            tile.classList.add(
+                "tile",
+                "kan-tile"
+            );
+
+            tile.innerHTML =
+                `<span>${kanTile}</span>`;
+
+            meld.appendChild(tile);
+        }
+
+        kanMeldsElement.appendChild(meld);
+
+    });
+}
 
 /* =========================================================
    29. 이벤트
