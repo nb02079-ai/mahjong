@@ -1577,6 +1577,8 @@ function setStatus(message) {
 
 function endGame(message) {
 
+    gameEnded = true;
+
     setStatus(message);
 
     discardButton.disabled = true;
