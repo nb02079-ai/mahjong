@@ -192,21 +192,57 @@ function initializeTiles() {
 
 function createDeadWall() {
 
-    /*
-        일반 마작패 중 마지막 5장을 왕패로 분리.
+    deadWall = [];
 
-        왕패:
-        [0] 최초 도라 표시패
-        [1~4] 추가 도라 표시패
+    /*
+        와일드패는 왕패에 들어갈 수 없다.
+        따라서 일반 마작패만 따로 모은다.
     */
 
-    deadWall = wall.splice(
-        wall.length - DEAD_WALL_SIZE,
-        DEAD_WALL_SIZE
+    const normalTiles = wall.filter(
+        tile => tile !== "★"
     );
 
-}
+    /*
+        일반 마작패에서 왕패 5장을 가져온다.
+    */
 
+    for (let i = 0; i < DEAD_WALL_SIZE; i++) {
+
+        const randomIndex =
+            Math.floor(
+                Math.random() * normalTiles.length
+            );
+
+        const tile =
+            normalTiles.splice(
+                randomIndex,
+                1
+            )[0];
+
+        deadWall.push(tile);
+
+    }
+
+    /*
+        왕패로 사용한 패를
+        실제 패산에서도 제거한다.
+    */
+
+    deadWall.forEach(tile => {
+
+        const index =
+            wall.indexOf(tile);
+
+        if (index !== -1) {
+
+            wall.splice(index, 1);
+
+        }
+
+    });
+
+}
 
 /* =========================================================
    8. 초기 손패
