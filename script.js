@@ -267,17 +267,25 @@ function drawInitialHand() {
 
 function revealInitialDora() {
 
-    const dora = deadWall.shift();
+    if (deadWall.length === 0) {
 
-    if (!dora) {
-
-        console.error("도라 표시패가 없습니다.");
+        console.error(
+            "왕패가 없습니다."
+        );
 
         return;
 
     }
 
-    doraIndicators.push(dora);
+    /*
+        왕패의 첫 번째 패를
+        도라 표시패로 사용
+    */
+
+    const dora =
+        deadWall[0];
+
+    doraIndicators = [dora];
 
 }
 
