@@ -97,6 +97,9 @@ let score = 0;
 const playerHandElement =
     document.getElementById("player-hand");
 
+const kanMeldsElement =
+    document.getElementById("kan-melds");
+
 const drawnTileElement =
     document.getElementById("drawn-tile");
 
