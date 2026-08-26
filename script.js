@@ -1677,22 +1677,60 @@ winButton.addEventListener(
     "click",
     () => {
 
+        if (gameEnded) {
+            return;
+        }
+
+        if (drawnTile === null) {
+            return;
+        }
+
         /*
-            현재는 점수 계산 미구현.
-
-            다음 단계에서:
-            - 역 판정
-            - 부수
-            - 판수
-            - 도라
-            - 와일드패 최적화
-            - 자 쯔모 점수
-
-            를 연결한다.
+            현재 손패 + 쯔모패가
+            실제로 화료 가능한지 다시 확인
         */
 
+        const winningHand = [
+            ...playerHand,
+            drawnTile
+        ];
+
+        if (!canWin(winningHand)) {
+
+            setStatus(
+                "화료할 수 없는 패입니다."
+            );
+
+            winButton.classList.add(
+                "hidden"
+            );
+
+            return;
+        }
+
+        /*
+            화료 확정
+        */
+
+        gameEnded = true;
+
+        discardButton.disabled = true;
+
+        kanButton.classList.add(
+            "hidden"
+        );
+
+        winButton.classList.add(
+            "hidden"
+        );
+
         setStatus(
-            "화료! (점수 계산은 다음 단계에서 구현)"
+            "화료! 축하합니다!"
+        );
+
+        console.log(
+            "화료 패:",
+            winningHand
         );
 
     }
