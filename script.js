@@ -1632,9 +1632,8 @@ discardButton.addEventListener(
 
 kanButton.addEventListener(
     "click",
-    declareKan
+    showKanSelection
 );
-
 
 winButton.addEventListener(
     "click",
