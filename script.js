@@ -602,10 +602,23 @@ function declareKan() {
 
 function revealKanDora() {
 
-    if (doraIndicators.length >= 5) {
+    /*
+        현재 공개된 도라 수
+        = 다음에 공개할 왕패의 위치
+    */
+
+    const nextIndex =
+        doraIndicators.length;
+
+
+    /*
+        최대 5장
+    */
+
+    if (nextIndex >= DEAD_WALL_SIZE) {
 
         setStatus(
-            "더 이상 공개할 도라 표시패가 없습니다."
+            "더 이상 공개할 도라가 없습니다."
         );
 
         return;
@@ -613,8 +626,12 @@ function revealKanDora() {
     }
 
 
+    /*
+        왕패에서 다음 패 확인
+    */
+
     const nextDora =
-        deadWall.shift();
+        deadWall[nextIndex];
 
 
     if (!nextDora) {
@@ -628,7 +645,20 @@ function revealKanDora() {
     }
 
 
-    doraIndicators.push(nextDora);
+    /*
+        도라 공개
+    */
+
+    doraIndicators.push(
+        nextDora
+    );
+
+
+    /*
+        화면 업데이트
+    */
+
+    renderDora();
 
 }
 
