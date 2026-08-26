@@ -719,7 +719,7 @@ function showKanSelection() {
 
     /*
         깡 가능한 패가 하나뿐이면
-        바로 깡 실행
+        바로 실행
     */
 
     if (candidates.length === 1) {
@@ -730,20 +730,43 @@ function showKanSelection() {
     }
 
     /*
-        여러 종류가 있으면
-        플레이어에게 선택하게 한다.
+        여러 종류의 깡이 가능할 경우
+        선택 버튼을 생성
     */
 
     setStatus(
         "깡할 패를 선택하세요."
     );
 
+    kanButton.classList.add("hidden");
+
     candidates.forEach(tile => {
 
-        console.log(
-            "깡 가능:",
-            tile
+        const button =
+            document.createElement("button");
+
+        button.classList.add(
+            "action-button",
+            "kan-choice-button"
         );
+
+        button.textContent =
+            `${tile} 깡`;
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                removeKanChoices();
+
+                declareKan(tile);
+
+            }
+        );
+
+        document
+            .querySelector(".action-section")
+            .appendChild(button);
 
     });
 
