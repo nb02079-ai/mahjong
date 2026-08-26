@@ -522,55 +522,119 @@ function selectDrawnTile() {
 }
 
 /* =========================================================
-   13. 타패
+   타패
 ========================================================= */
 
 function discardTile() {
 
     if (drawnTile === null) {
+
         setStatus("쯔모한 패가 없습니다.");
+
         return;
     }
 
+
     let discardedTile;
 
-    // 손패에서 패를 선택한 경우
-    if (selectedTileIndex !== null) {
 
+    /*
+        =====================================
+        1. 쯔모패를 선택한 경우
+        =====================================
+    */
+
+    if (drawnTileSelected) {
+
+        // 쯔모패 자체를 버림
+        discardedTile = drawnTile;
+
+    }
+
+
+    /*
+        =====================================
+        2. 손패를 선택한 경우
+        =====================================
+    */
+
+    else if (selectedTileIndex !== null) {
+
+        // 선택한 손패를 버림
         discardedTile =
             playerHand.splice(
                 selectedTileIndex,
                 1
             )[0];
 
-        // 쯔모한 패를 손패에 추가
-        playerHand.push(drawnTile);
 
-        playerHand =
-             sortHand(playerHand);
+        // 쯔모패를 손패에 추가
+        playerHand.push(
+            drawnTile
+        );
 
     }
 
-    // 아무 패도 선택하지 않은 경우
+
+    /*
+        =====================================
+        3. 아무것도 선택하지 않은 경우
+        =====================================
+    */
+
     else {
 
-        // 쯔모패 자체를 버림
+        // 기본적으로 쯔모패를 버림
         discardedTile = drawnTile;
+
     }
 
-    console.log("타패:", discardedTile);
 
-    // 상태 초기화
+    console.log(
+        "타패:",
+        discardedTile
+    );
+
+
+    /*
+        손패 자동 정렬
+    */
+
+    playerHand =
+        sortHand(playerHand);
+
+
+    /*
+        상태 초기화
+    */
+
     drawnTile = null;
+
     selectedTileIndex = null;
 
-    // 액션 버튼 숨기기
-    kanButton.classList.add("hidden");
-    winButton.classList.add("hidden");
+    drawnTileSelected = false;
+
+
+    /*
+        액션 버튼 초기화
+    */
+
+    kanButton.classList.add(
+        "hidden"
+    );
+
+    winButton.classList.add(
+        "hidden"
+    );
+
 
     renderAll();
 
-    // 15회 모두 사용했으면 종료
+
+    /*
+        15회 쯔모를 모두 사용했는지 확인
+    */
+
     if (turnCount >= MAX_TURNS) {
 
         endGame(
@@ -580,12 +644,22 @@ function discardTile() {
         return;
     }
 
-    setStatus("다음 패를 뽑습니다.");
 
-    // 다음 쯔모
+    setStatus(
+        "다음 패를 뽑습니다."
+    );
+
+
+    /*
+        다음 쯔모
+    */
+
     setTimeout(() => {
+
         drawTile();
+
     }, 300);
+
 }
 
 
