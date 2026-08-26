@@ -1303,12 +1303,13 @@ function renderAll() {
 
     renderHand();
 
+    renderKanMelds();
+
     renderDrawnTile();
 
     renderDora();
 
     renderInfo();
-
 }
 
 /* =========================================================
