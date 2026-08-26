@@ -610,3 +610,26 @@ body {
     }
 
 }
+
+/* =========================
+   DORA TILE HIGHLIGHT
+========================= */
+
+.tile.dora-highlight {
+    border: 2px solid #e04a4a;
+
+    box-shadow:
+        0 0 0 1px rgba(224, 74, 74, 0.25),
+        0 7px 15px rgba(0, 0, 0, 0.3);
+}
+
+
+/* 선택 + 도라 */
+
+.tile.selected.dora-highlight {
+    border: 2px solid #e04a4a;
+
+    box-shadow:
+        0 0 0 1px rgba(224, 74, 74, 0.25),
+        0 10px 20px rgba(0, 0, 0, 0.4);
+}
