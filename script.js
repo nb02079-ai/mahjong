@@ -1057,14 +1057,21 @@ function renderAll() {
 
 }
 
-
 /* =========================================================
-   22. 손패 렌더링
+   손패 렌더링
 ========================================================= */
 
 function renderHand() {
 
     playerHandElement.innerHTML = "";
+
+
+    /*
+        현재 적용되는 도라
+    */
+
+    const activeDoraTiles =
+        getActiveDoraTiles();
 
 
     playerHand.forEach((tile, index) => {
@@ -1073,12 +1080,33 @@ function renderHand() {
             document.createElement("button");
 
 
-        button.className = "tile";
+        button.classList.add("tile");
 
+
+        /*
+            선택된 패
+        */
 
         if (index === selectedTileIndex) {
 
-            button.classList.add("selected");
+            button.classList.add(
+                "selected"
+            );
+
+        }
+
+
+        /*
+            도라 패
+        */
+
+        if (
+            activeDoraTiles.includes(tile)
+        ) {
+
+            button.classList.add(
+                "dora-highlight"
+            );
 
         }
 
@@ -1093,7 +1121,9 @@ function renderHand() {
         );
 
 
-        playerHandElement.appendChild(button);
+        playerHandElement.appendChild(
+            button
+        );
 
     });
 
@@ -1102,7 +1132,6 @@ function renderHand() {
         playerHand.length;
 
 }
-
 
 /* =========================================================
    23. 쯔모패 렌더링
