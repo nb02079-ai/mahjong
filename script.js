@@ -538,6 +538,11 @@ function selectDrawnTile() {
 
 function discardTile() {
 
+   if (gameEnded) {
+        return;
+    }
+
+
     if (drawnTile === null) {
 
         setStatus("쯔모한 패가 없습니다.");
