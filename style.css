@@ -191,6 +191,94 @@ body {
     transform-origin: left center;
 }
 
+/* =========================
+   DORA / DEAD WALL
+========================= */
+
+.dora-indicators {
+    min-height: 75px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+}
+
+
+/* 도라 표시패 */
+
+.dora-tile {
+    width: 52px;
+    height: 68px;
+
+    transform: none;
+
+    cursor: default;
+
+    box-shadow:
+        0 5px 12px rgba(0, 0, 0, 0.25);
+}
+
+.dora-tile:hover {
+    transform: none;
+}
+
+
+/* 아직 공개되지 않은 왕패 */
+
+.dora-tile.hidden-dora {
+    background: #34383e;
+
+    border: 1px solid #555a61;
+
+    color: transparent;
+
+    cursor: default;
+
+    position: relative;
+
+    overflow: hidden;
+}
+
+
+/* 패 뒷면 */
+
+.dora-tile.hidden-dora::before {
+    content: "";
+
+    position: absolute;
+
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+
+    border: 2px solid #777c82;
+
+    border-radius: 4px;
+}
+
+
+/* 뒷면 중앙 장식 */
+
+.dora-tile.hidden-dora::after {
+    content: "◆";
+
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    color: #777c82;
+
+    font-size: 18px;
+}
 
 /* =========================
    TILE
