@@ -480,9 +480,9 @@ function drawTile() {
         깡 가능한지 검사
     */
 
-    if (canKan()) {
+    if (getKanCandidates().length > 0) {
 
-        kanButton.classList.remove("hidden");
+    kanButton.classList.remove("hidden");
 
     }
 
