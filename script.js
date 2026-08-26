@@ -773,73 +773,87 @@ function showKanSelection() {
 }
 
 /* =========================================================
-   15. 깡
+   깡
 ========================================================= */
 
-function declareKan() {
+function declareKan(kanTile) {
 
-    if (!canKan()) {
-
-        return;
-
-    }
-
-
-    const tiles = [
-        ...playerHand
-    ];
-
-    if (drawnTile !== null) {
-
-        tiles.push(drawnTile);
-
-    }
-
+    const candidates =
+        getKanCandidates();
 
     /*
-        4장이 모인 패 찾기
+        선택한 패가 실제로
+        깡 가능한지 확인
     */
 
-    const counts = {};
+    if (!candidates.includes(kanTile)) {
 
-    tiles.forEach(tile => {
-
-        if (tile === "★") return;
-
-        counts[tile] =
-            (counts[tile] || 0) + 1;
-
-    });
-
-
-    const kanTile =
-        Object.keys(counts)
-            .find(tile => counts[tile] >= 4);
-
-
-    if (!kanTile) {
-
-        return;
-
-    }
-
-
-    /*
-        해당 패 4장을 손패에서 제거
-    */
-
-    playerHand =
-        playerHand.filter(
-            tile => tile !== kanTile
+        setStatus(
+            "해당 패는 깡할 수 없습니다."
         );
 
+        return;
+
+    }
+
 
     /*
-        현재 쯔모패 제거
+        선택한 패 4장 제거
+    */
+
+    let removedCount = 0;
+
+    playerHand =
+        playerHand.filter(tile => {
+
+            if (
+                tile === kanTile &&
+                removedCount < 4
+            ) {
+
+                removedCount++;
+
+                return false;
+
+            }
+
+            return true;
+
+        });
+
+
+    /*
+        쯔모패가 깡에 포함된 경우 제거
+    */
+
+    if (drawnTile === kanTile) {
+
+        /*
+            손패에서 이미 4장을 제거했다면
+            쯔모패가 포함되어 있던 경우
+            손패에는 3장만 있었을 가능성이 있다.
+
+            따라서 실제 남은 패를 기준으로
+            다시 처리한다.
+        */
+
+    }
+
+
+    /*
+        현재 쯔모패 초기화
     */
 
     drawnTile = null;
 
+    drawnTileSelected = false;
+
+    selectedTileIndex = null;
+
+
+    /*
+        깡 횟수 증가
+    */
 
     kanCount++;
 
@@ -852,12 +866,17 @@ function declareKan() {
 
 
     /*
-        일반 패산에서 보충
-        ★ 중요:
-        turnCount를 증가시키지 않는다.
+        깡은 쯔모 기회를 소비하지 않는다.
+        따라서 turnCount는 그대로 유지.
     */
 
-    drawnTile = drawFromWall();
+
+    /*
+        패산에서 보충패
+    */
+
+    drawnTile =
+        drawFromWall();
 
 
     if (!drawnTile) {
@@ -867,20 +886,47 @@ function declareKan() {
     }
 
 
-    setStatus(
-        `${kanCount}번째 깡! 추가 도라가 공개되었습니다.`
+    /*
+        손패 정렬
+    */
+
+    playerHand =
+        sortHand(playerHand);
+
+
+    /*
+        버튼 초기화
+    */
+
+    kanButton.classList.add(
+        "hidden"
+    );
+
+    winButton.classList.add(
+        "hidden"
     );
 
 
     /*
-        깡을 했으므로
-        추가 도라가 있는지 검사
+        화면 갱신
     */
 
     renderAll();
 
-}
 
+    /*
+        보충패를 받은 뒤
+        화료 / 추가 깡 검사
+    */
+
+    checkActionsAfterDraw();
+
+
+    setStatus(
+        `${kanCount}번째 깡! 보충패를 뽑았습니다.`
+    );
+
+}
 
 /* =========================================================
    16. 깡도라 공개
