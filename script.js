@@ -986,28 +986,61 @@ function renderDora() {
     doraIndicatorsElement.innerHTML = "";
 
 
-    doraIndicators.forEach(tile => {
+    /*
+        왕패 5칸을 항상 표시
+    */
+
+    for (
+        let i = 0;
+        i < DEAD_WALL_SIZE;
+        i++
+    ) {
 
         const element =
             document.createElement("div");
 
 
-        element.className =
-            "tile dora-tile";
+        element.classList.add(
+            "tile",
+            "dora-tile"
+        );
 
 
-        element.innerHTML =
-            `<span>${tile}</span>`;
+        /*
+            이미 공개된 도라
+        */
+
+        if (
+            i < doraIndicators.length
+        ) {
+
+            element.innerHTML =
+                `<span>${doraIndicators[i]}</span>`;
+
+        }
+
+
+        /*
+            아직 공개되지 않은 왕패
+        */
+
+        else {
+
+            element.classList.add(
+                "hidden-dora"
+            );
+
+        }
 
 
         doraIndicatorsElement
             .appendChild(element);
 
-    });
+    }
 
 
     doraCountElement.textContent =
-        doraIndicators.length;
+        `${doraIndicators.length} / ${DEAD_WALL_SIZE}`;
 
 }
 
