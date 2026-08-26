@@ -633,3 +633,16 @@ body {
         0 0 0 1px rgba(224, 74, 74, 0.25),
         0 10px 20px rgba(0, 0, 0, 0.4);
 }
+
+/* =========================
+   SELECTED DRAWN TILE
+========================= */
+
+.tile.drawn.selected {
+    transform: translateY(-8px);
+
+    border: 2px solid #d7d9dc;
+
+    box-shadow:
+        0 10px 20px rgba(0, 0, 0, 0.4);
+}
