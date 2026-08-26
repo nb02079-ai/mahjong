@@ -1166,23 +1166,29 @@ function renderDrawnTile() {
 
     drawnTileElement.innerHTML = "";
 
-
     if (!drawnTile) {
-
         return;
-
     }
-
 
     const tile =
         document.createElement("div");
-
 
     tile.classList.add(
         "tile",
         "drawn"
     );
 
+    /*
+        쯔모패가 선택되었는지 확인
+    */
+
+    if (drawnTileSelected) {
+
+        tile.classList.add(
+            "selected"
+        );
+
+    }
 
     /*
         쯔모패가 도라인지 확인
@@ -1190,7 +1196,6 @@ function renderDrawnTile() {
 
     const activeDoraTiles =
         getActiveDoraTiles();
-
 
     if (
         activeDoraTiles.includes(drawnTile)
@@ -1202,17 +1207,20 @@ function renderDrawnTile() {
 
     }
 
-
     tile.innerHTML =
         `<span>${drawnTile}</span>`;
 
+    /*
+        쯔모패 클릭
+    */
 
-    drawnTileElement.appendChild(
-        tile
+    tile.addEventListener(
+        "click",
+        selectDrawnTile
     );
 
+    drawnTileElement.appendChild(tile);
 }
-
 
 /* =========================================================
    24. 도라 렌더링
