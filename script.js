@@ -89,6 +89,8 @@ let kanCount = 0;
 
 let score = 0;
 
+let gameEnded = false;
+
 
 /* =========================================================
    4. DOM
