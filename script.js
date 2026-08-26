@@ -76,6 +76,8 @@ let playerHand = [];
 
 let drawnTile = null;
 
+let kanMelds = [];
+
 let selectedTileIndex = null;
 let drawnTileSelected = false;
 
