@@ -1640,6 +1640,37 @@ function renderKanMelds() {
 }
 
 /* =========================================================
+   check actions after draw
+========================================================= */
+
+function checkActionsAfterDraw() {
+
+    if (
+        drawnTile !== null &&
+        canWin([
+            ...playerHand,
+            drawnTile
+        ])
+    ) {
+
+        winButton.classList.remove(
+            "hidden"
+        );
+
+    }
+
+    if (
+        getKanCandidates().length > 0
+    ) {
+
+        kanButton.classList.remove(
+            "hidden"
+        );
+
+    }
+}
+
+/* =========================================================
    29. 이벤트
 ========================================================= */
 
