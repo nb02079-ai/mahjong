@@ -1,0 +1,524 @@
+/* =========================
+   RESET
+========================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+button {
+    font-family: inherit;
+}
+
+
+/* =========================
+   BODY
+========================= */
+
+body {
+    min-height: 100vh;
+
+    background: #17191c;
+
+    color: #f3f3f3;
+
+    font-family:
+        Arial,
+        "Noto Sans KR",
+        sans-serif;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 30px;
+}
+
+
+/* =========================
+   GAME CONTAINER
+========================= */
+
+.game-container {
+    width: 100%;
+    max-width: 1100px;
+
+    min-height: 850px;
+
+    background: #24272b;
+
+    border: 1px solid #3b3f44;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.35);
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.game-header {
+    min-height: 100px;
+
+    padding: 25px 35px;
+
+    border-bottom: 1px solid #3b3f44;
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+}
+
+.game-title h1 {
+    font-size: 28px;
+
+    letter-spacing: 3px;
+}
+
+.game-title p {
+    margin-top: 6px;
+
+    color: #999da3;
+
+    font-size: 14px;
+}
+
+
+/* =========================
+   GAME INFO
+========================= */
+
+.game-info {
+    display: flex;
+
+    gap: 35px;
+}
+
+.info-box {
+    min-width: 110px;
+
+    display: flex;
+    flex-direction: column;
+
+    text-align: right;
+}
+
+.info-label {
+    color: #888d94;
+
+    font-size: 11px;
+
+    letter-spacing: 1.5px;
+}
+
+.info-value {
+    margin-top: 4px;
+
+    font-size: 25px;
+
+    font-weight: 700;
+}
+
+
+/* =========================
+   GAME BOARD
+========================= */
+
+.game-board {
+    flex: 1;
+
+    padding: 30px 45px 40px;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================
+   SECTION TITLE
+========================= */
+
+.section-title {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 12px;
+
+    color: #8d9298;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+}
+
+
+/* =========================
+   DORA
+========================= */
+
+.dora-section {
+    margin-bottom: 20px;
+}
+
+.dora-indicators {
+    min-height: 68px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+.dora-tile {
+    transform: scale(0.8);
+
+    transform-origin: left center;
+}
+
+
+/* =========================
+   TILE
+========================= */
+
+.tile {
+    width: 52px;
+    height: 68px;
+
+    background: #f4f1e8;
+
+    border: 1px solid #c8c4ba;
+
+    border-radius: 6px;
+
+    color: #151515;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    font-size: 42px;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.tile:hover {
+    transform: translateY(-5px);
+
+    box-shadow:
+        0 7px 15px rgba(0, 0, 0, 0.3);
+}
+
+.tile.selected {
+    transform: translateY(-12px);
+
+    border: 2px solid #d7d9dc;
+
+    box-shadow:
+        0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+.status-section {
+    min-height: 38px;
+
+    margin-bottom: 10px;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+}
+
+.game-status {
+    color: #b8bdc4;
+
+    font-size: 14px;
+
+    text-align: center;
+}
+
+
+/* =========================
+   PLAYER HAND
+========================= */
+
+.hand-section {
+    margin-top: 10px;
+}
+
+.player-hand {
+    min-height: 90px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: flex-end;
+
+    gap: 5px;
+
+    padding: 15px 5px;
+}
+
+
+/* =========================
+   DRAWN TILE
+========================= */
+
+.draw-section {
+    margin-top: 10px;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+}
+
+.draw-section .section-title {
+    width: 100%;
+}
+
+.drawn-tile-container {
+    min-height: 80px;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+}
+
+.tile.drawn {
+    cursor: default;
+
+    box-shadow:
+        0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+.tile.drawn:hover {
+    transform: none;
+}
+
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+
+.action-section {
+    margin-top: 30px;
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+}
+
+.action-button {
+    min-width: 150px;
+
+    height: 48px;
+
+    border: 1px solid #555a61;
+
+    border-radius: 8px;
+
+    background: #30343a;
+
+    color: #f1f1f1;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.action-button:hover {
+    background: #3a3f45;
+
+    border-color: #70757c;
+
+    transform: translateY(-2px);
+}
+
+.action-button:active {
+    transform: translateY(0);
+}
+
+
+/* =========================
+   BUTTON TYPES
+========================= */
+
+.kan-button {
+    background: #34383e;
+}
+
+.win-button {
+    background: #41464d;
+
+    border-color: #737980;
+}
+
+
+/* =========================
+   HIDDEN
+========================= */
+
+.hidden {
+    display: none;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+.game-footer {
+    min-height: 65px;
+
+    padding: 15px 35px;
+
+    border-top: 1px solid #3b3f44;
+
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    color: #858a91;
+
+    font-size: 12px;
+}
+
+.deck-info,
+.wild-info {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.deck-info span:last-child {
+    color: #d9dadd;
+
+    font-weight: 700;
+}
+
+.wild-cards {
+    display: flex;
+
+    gap: 5px;
+}
+
+.wild-card {
+    width: 22px;
+    height: 28px;
+
+    border: 1px solid #6a6e73;
+
+    border-radius: 4px;
+
+    background: #30343a;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    color: #d4d6d8;
+
+    font-size: 14px;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 800px) {
+
+    body {
+        padding: 10px;
+    }
+
+    .game-container {
+        min-height: 100vh;
+
+        border-radius: 0;
+    }
+
+    .game-header {
+        padding: 20px;
+    }
+
+    .game-title h1 {
+        font-size: 21px;
+    }
+
+    .game-info {
+        gap: 15px;
+    }
+
+    .info-box {
+        min-width: 80px;
+    }
+
+    .game-board {
+        padding: 25px 15px 30px;
+    }
+
+    .player-hand {
+        gap: 2px;
+
+        overflow-x: auto;
+
+        justify-content: flex-start;
+    }
+
+    .tile {
+        flex-shrink: 0;
+
+        width: 42px;
+        height: 58px;
+
+        font-size: 32px;
+    }
+
+    .action-button {
+        min-width: 120px;
+    }
+
+}
