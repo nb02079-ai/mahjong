@@ -258,6 +258,9 @@ function drawInitialHand() {
 
     }
 
+    playerHand =
+        sortHand(playerHand);
+
 }
 
 
