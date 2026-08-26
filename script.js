@@ -700,6 +700,56 @@ function getKanCandidates() {
 }
 
 /* =========================================================
+   깡 선택 UI
+========================================================= */
+
+function showKanSelection() {
+
+    const candidates =
+        getKanCandidates();
+
+    if (candidates.length === 0) {
+
+        setStatus(
+            "현재 깡할 수 있는 패가 없습니다."
+        );
+
+        return;
+    }
+
+    /*
+        깡 가능한 패가 하나뿐이면
+        바로 깡 실행
+    */
+
+    if (candidates.length === 1) {
+
+        declareKan(candidates[0]);
+
+        return;
+    }
+
+    /*
+        여러 종류가 있으면
+        플레이어에게 선택하게 한다.
+    */
+
+    setStatus(
+        "깡할 패를 선택하세요."
+    );
+
+    candidates.forEach(tile => {
+
+        console.log(
+            "깡 가능:",
+            tile
+        );
+
+    });
+
+}
+
+/* =========================================================
    15. 깡
 ========================================================= */
 
