@@ -1061,27 +1061,6 @@ function canWin(hand) {
 
     /*
         깡은 이미 완성된 몸통으로 처리한다.
-
-        깡 0개:
-        14장 → 일반 몸통 4개 + 머리
-
-        깡 1개:
-        11장 → 일반 몸통 3개 + 머리
-
-        깡 2개:
-        8장 → 일반 몸통 2개 + 머리
-
-        깡 3개:
-        5장 → 일반 몸통 1개 + 머리
-    */
-
-
-    /*
-        깡 1개를 할 때마다
-        일반 손패에서 3장이 줄어든다.
-
-        4번째 패는 깡으로 별도 관리된다.
-        이후 보충패를 다시 가져온다.
     */
 
     const expectedHandCount =
@@ -1096,24 +1075,32 @@ function canWin(hand) {
 
 
     /*
-        와일드패는 아직 화료 판정에 사용하지 않는다.
-    */
-
-    if (hand.includes("★")) {
-
-        return false;
-
-    }
-
-
-    /*
-        깡을 이미 완성된 몸통으로 처리하므로
-        남은 일반 몸통의 개수만 검사한다.
+        필요한 일반 몸통 개수
     */
 
     const requiredMentsu =
         4 - kanMelds.length;
 
+
+    /*
+        와일드패가 있는 경우
+        와일드패를 이용해서 화료 가능한지 검사
+    */
+
+    if (hand.includes("★")) {
+
+        return canWinWithWild(
+            hand,
+            requiredMentsu
+        );
+
+    }
+
+
+    /*
+        와일드패가 없다면
+        기존 방식 그대로 검사
+    */
 
     return isStandardHand(
         hand,
