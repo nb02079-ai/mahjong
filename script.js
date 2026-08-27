@@ -1060,51 +1060,47 @@ function checkActionsAfterDraw() {
 function canWin(hand) {
 
     /*
-        깡은 이미 완성된 몸통으로 처리한다.
+        일반적인 14장 화료만 검사
+
+        ★ 와일드패가 있는 경우에도
+        와일드패를 다른 패로 대체하여 검사한다.
     */
 
-    const expectedHandCount =
-        14 - (kanMelds.length * 3);
-
-
-    if (hand.length !== expectedHandCount) {
-
+    if (hand.length !== 14) {
         return false;
-
     }
+
+    const wildCount =
+        hand.filter(tile => tile === "★").length;
 
 
     /*
-        필요한 일반 몸통 개수
+        와일드패가 없는 경우
+        → 기존 화료 판정
     */
 
-    const requiredMentsu =
-        4 - kanMelds.length;
+    if (wildCount === 0) {
+
+        return isStandardHand(hand);
+
+    }
 
 
     /*
         와일드패가 있는 경우
-        와일드패를 이용해서 화료 가능한지 검사
+        → 와일드패를 이용한 화료 판정
     */
 
-    if (hand.includes("★")) {
+    const normalTiles =
+        hand.filter(tile => tile !== "★");
 
-        return canWinWithWild(
-            hand,
-            requiredMentsu
-        );
-
-    }
+    const counts =
+        countTiles(normalTiles);
 
 
-    /*
-        와일드패가 없다면
-        기존 방식 그대로 검사
-    */
-
-    return isStandardHand(
-        hand,
-        requiredMentsu
+    return isWildStandardHand(
+        counts,
+        wildCount
     );
 
 }
