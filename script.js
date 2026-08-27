@@ -1109,6 +1109,132 @@ function canWin(hand) {
 
 }
 
+/* =========================================================
+   can make ments with wild
+========================================================= */
+
+function canWinWithWild(hand, requiredMentsu) {
+
+    /*
+        와일드패 개수
+    */
+
+    const wildCount =
+        hand.filter(
+            tile => tile === "★"
+        ).length;
+
+
+    /*
+        일반 패만 따로 추출
+    */
+
+    const normalTiles =
+        hand.filter(
+            tile => tile !== "★"
+        );
+
+
+    /*
+        일반 패 개수 계산
+    */
+
+    const counts =
+        countTiles(normalTiles);
+
+
+    /*
+        머리를 만드는 경우부터 검사한다.
+    */
+
+    for (const tile in counts) {
+
+        /*
+            일반 패 2장으로 머리
+        */
+
+        if (counts[tile] >= 2) {
+
+            counts[tile] -= 2;
+
+
+            if (
+                canMakeMentsuWithWild(
+                    counts,
+                    requiredMentsu,
+                    wildCount
+                )
+            ) {
+
+                return true;
+
+            }
+
+
+            counts[tile] += 2;
+
+        }
+
+    }
+
+
+    /*
+        일반 패 1장 + 와일드 1장으로 머리
+    */
+
+    if (wildCount >= 1) {
+
+        for (const tile in counts) {
+
+            if (counts[tile] >= 1) {
+
+                counts[tile]--;
+
+                if (
+                    canMakeMentsuWithWild(
+                        counts,
+                        requiredMentsu,
+                        wildCount - 1
+                    )
+                ) {
+
+                    return true;
+
+                }
+
+                counts[tile]++;
+
+            }
+
+        }
+
+    }
+
+
+    /*
+        와일드 2장만으로 머리
+    */
+
+    if (wildCount >= 2) {
+
+        if (
+            canMakeMentsuWithWild(
+                counts,
+                requiredMentsu,
+                wildCount - 2
+            )
+        ) {
+
+            return true;
+
+        }
+
+    }
+
+
+    return false;
+
+}
 
 /* =========================================================
    18. 기본형 화료 검사
