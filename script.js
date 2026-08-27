@@ -1236,6 +1236,250 @@ function canWinWithWild(hand, requiredMentsu) {
 
 }
 
+function canMakeMentsuWithWild(
+    counts,
+    requiredMentsu,
+    wildCount
+) {
+
+    /*
+        필요한 몸통을 모두 만들었는지 확인
+    */
+
+    if (requiredMentsu === 0) {
+
+        const remaining =
+            Object.values(counts)
+                .reduce(
+                    (sum, value) => sum + value,
+                    0
+                );
+
+
+        /*
+            남은 일반 패가 없고
+            와일드패도 없어야 한다.
+        */
+
+        return (
+            remaining === 0 &&
+            wildCount === 0
+        );
+
+    }
+
+
+    /*
+        남아있는 첫 번째 패
+    */
+
+    const tile =
+        Object.keys(counts)
+            .find(
+                key => counts[key] > 0
+            );
+
+
+    /*
+        일반 패가 더 이상 없다면
+        남은 와일드패만으로
+        몸통을 만들 수 있는지 확인
+    */
+
+    if (!tile) {
+
+        return wildCount >=
+            requiredMentsu * 3;
+
+    }
+
+
+    const index =
+        TILE_TYPES.indexOf(tile);
+
+
+    /* =====================================
+       1. 커쯔
+       ===================================== */
+
+    const sameCount =
+        counts[tile];
+
+
+    /*
+        일반 패 3장
+    */
+
+    if (sameCount >= 3) {
+
+        counts[tile] -= 3;
+
+
+        if (
+            canMakeMentsuWithWild(
+                counts,
+                requiredMentsu - 1,
+                wildCount
+            )
+        ) {
+
+            return true;
+
+        }
+
+
+        counts[tile] += 3;
+
+    }
+
+
+    /*
+        일반 패 2장 + 와일드 1장
+    */
+
+    if (
+        sameCount >= 2 &&
+        wildCount >= 1
+    ) {
+
+        counts[tile] -= 2;
+
+
+        if (
+            canMakeMentsuWithWild(
+                counts,
+                requiredMentsu - 1,
+                wildCount - 1
+            )
+        ) {
+
+            return true;
+
+        }
+
+
+        counts[tile] += 2;
+
+    }
+
+
+    /*
+        일반 패 1장 + 와일드 2장
+    */
+
+    if (
+        sameCount >= 1 &&
+        wildCount >= 2
+    ) {
+
+        counts[tile]--;
+
+
+        if (
+            canMakeMentsuWithWild(
+                counts,
+                requiredMentsu - 1,
+                wildCount - 2
+            )
+        ) {
+
+            return true;
+
+        }
+
+
+        counts[tile]++;
+
+    }
+
+
+    /* =====================================
+       2. 슌쯔
+       ===================================== */
+
+    if (index >= 0 && index <= 26) {
+
+        const number =
+            index % 9;
+
+
+        if (number <= 6) {
+
+            const tile2 =
+                TILE_TYPES[index + 1];
+
+            const tile3 =
+                TILE_TYPES[index + 2];
+
+
+            const count2 =
+                counts[tile2] || 0;
+
+            const count3 =
+                counts[tile3] || 0;
+
+
+            /*
+                필요한 와일드패 개수 계산
+            */
+
+            const missing =
+                (count2 > 0 ? 0 : 1) +
+                (count3 > 0 ? 0 : 1);
+
+
+            /*
+                첫 번째 패는 이미 존재하므로
+                missing 만큼 와일드가 필요하다.
+            */
+
+            if (wildCount >= missing) {
+
+                counts[tile]--;
+
+                if (count2 > 0) {
+                    counts[tile2]--;
+                }
+
+                if (count3 > 0) {
+                    counts[tile3]--;
+                }
+
+
+                if (
+                    canMakeMentsuWithWild(
+                        counts,
+                        requiredMentsu - 1,
+                        wildCount - missing
+                    )
+                ) {
+
+                    return true;
+
+                }
+
+
+                counts[tile]++;
+
+                if (count2 > 0) {
+                    counts[tile2]++;
+                }
+
+                if (count3 > 0) {
+                    counts[tile3]++;
+                }
+
+            }
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
 /* =========================================================
    18. 기본형 화료 검사
 ========================================================= */
