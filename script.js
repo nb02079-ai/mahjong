@@ -1136,7 +1136,7 @@ function canWin(hand) {
    18. 기본형 화료 검사
 ========================================================= */
 
-function isStandardHand(hand) {
+function isStandardHand(hand, requiredMentsu) {
 
     const counts = countTiles(hand);
 
@@ -1152,7 +1152,12 @@ function isStandardHand(hand) {
             counts[tile] -= 2;
 
 
-            if (canMakeFourMentsu(counts)) {
+            if (
+                canMakeMentsu(
+                    counts,
+                    requiredMentsu
+                )
+            ) {
 
                 return true;
 
