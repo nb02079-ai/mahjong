@@ -8,7 +8,7 @@
    1. 게임 설정
 ========================================================= */
 
-const MAX_TURNS = 77;
+const MAX_TURNS = 70;
 const WILD_COUNT = 2;
 const DEAD_WALL_SIZE = 5;
 
@@ -1438,6 +1438,26 @@ function canMakeMentsu(
    21. 와일드패 포함 화료
 ========================================================= */
 
+/*
+    와일드패(★)를 포함한 일반적인 화료 판정
+
+    기본 형태
+
+        몸통 × requiredMentsu
+        +
+        머리 × 1
+
+    와일드패는
+
+        ① 일반 패 + ★
+        ② ★ + ★
+
+    형태로 머리를 만들 수 있다.
+
+    또한 필요할 경우 와일드패를
+    몸통의 부족한 패로 사용할 수 있다.
+*/
+
 function isWildStandardHand(
     counts,
     wildCount,
@@ -1445,19 +1465,16 @@ function isWildStandardHand(
 ) {
 
     /*
+        =====================================
         ① 일반 패 2장으로 머리
+        =====================================
     */
 
-    for (
-        const tile in counts
-    ) {
+    for (const tile in counts) {
 
-        if (
-            counts[tile] >= 2
-        ) {
+        if (counts[tile] >= 2) {
 
             counts[tile] -= 2;
-
 
             if (
                 canMakeMentsuWithWild(
@@ -1470,35 +1487,26 @@ function isWildStandardHand(
                 counts[tile] += 2;
 
                 return true;
-
             }
 
-
             counts[tile] += 2;
-
         }
-
     }
 
 
     /*
+        =====================================
         ② 일반 패 1장 + ★ 1장으로 머리
+        =====================================
     */
 
-    if (
-        wildCount >= 1
-    ) {
+    if (wildCount >= 1) {
 
-        for (
-            const tile in counts
-        ) {
+        for (const tile in counts) {
 
-            if (
-                counts[tile] >= 1
-            ) {
+            if (counts[tile] >= 1) {
 
                 counts[tile]--;
-
 
                 if (
                     canMakeMentsuWithWild(
@@ -1511,26 +1519,21 @@ function isWildStandardHand(
                     counts[tile]++;
 
                     return true;
-
                 }
 
-
                 counts[tile]++;
-
             }
-
         }
-
     }
 
 
     /*
+        =====================================
         ③ ★ ★ 로 머리
+        =====================================
     */
 
-    if (
-        wildCount >= 2
-    ) {
+    if (wildCount >= 2) {
 
         if (
             canMakeMentsuWithWild(
@@ -1541,20 +1544,38 @@ function isWildStandardHand(
         ) {
 
             return true;
-
         }
-
     }
 
 
     return false;
-
 }
 
 
 /* =========================================================
    22. 와일드 포함 몸통 구성
 ========================================================= */
+
+/*
+    남은 일반 패 + 와일드패로
+    requiredMentsu개의 몸통을 만드는 함수.
+
+    와일드패는
+
+    커쯔:
+        AAA
+        AA★
+        A★★
+        ★★★
+
+    슌쯔:
+        ABC
+        AB★
+        A★C
+        ★BC
+
+    모두 가능하도록 처리한다.
+*/
 
 function canMakeMentsuWithWild(
     counts,
@@ -1563,12 +1584,12 @@ function canMakeMentsuWithWild(
 ) {
 
     /*
-        몸통을 모두 만든 경우
+        =====================================
+        몸통을 모두 만들었는지 확인
+        =====================================
     */
 
-    if (
-        requiredMentsu === 0
-    ) {
+    if (requiredMentsu === 0) {
 
         const remaining =
             Object.values(counts)
@@ -1578,18 +1599,17 @@ function canMakeMentsuWithWild(
                     0
                 );
 
-
         return (
             remaining === 0 &&
             wildCount === 0
         );
-
     }
 
 
     /*
-        일반 패가 더 이상 없다면
-        ★만으로 몸통 구성
+        =====================================
+        남은 일반 패가 없는 경우
+        =====================================
     */
 
     const tile =
@@ -1602,19 +1622,29 @@ function canMakeMentsuWithWild(
 
     if (!tile) {
 
+        /*
+            남은 몸통을 전부
+            ★로 만들 수 있는 경우
+        */
+
         return (
-            wildCount >=
+            wildCount ===
             requiredMentsu * 3
         );
-
     }
 
 
     /*
-        =====================================
-        1. 커쯔
-        =====================================
+        현재 패의 숫자 순서
     */
+
+    const index =
+        TILE_TYPES.indexOf(tile);
+
+
+    /* =====================================================
+       1. 커쯔
+    ===================================================== */
 
     const sameCount =
         counts[tile];
@@ -1624,12 +1654,9 @@ function canMakeMentsuWithWild(
         일반 패 3장
     */
 
-    if (
-        sameCount >= 3
-    ) {
+    if (sameCount >= 3) {
 
         counts[tile] -= 3;
-
 
         if (
             canMakeMentsuWithWild(
@@ -1642,12 +1669,9 @@ function canMakeMentsuWithWild(
             counts[tile] += 3;
 
             return true;
-
         }
 
-
         counts[tile] += 3;
-
     }
 
 
@@ -1662,7 +1686,6 @@ function canMakeMentsuWithWild(
 
         counts[tile] -= 2;
 
-
         if (
             canMakeMentsuWithWild(
                 counts,
@@ -1674,12 +1697,9 @@ function canMakeMentsuWithWild(
             counts[tile] += 2;
 
             return true;
-
         }
 
-
         counts[tile] += 2;
-
     }
 
 
@@ -1694,7 +1714,6 @@ function canMakeMentsuWithWild(
 
         counts[tile]--;
 
-
         if (
             canMakeMentsuWithWild(
                 counts,
@@ -1706,174 +1725,158 @@ function canMakeMentsuWithWild(
             counts[tile]++;
 
             return true;
-
         }
 
-
         counts[tile]++;
-
     }
 
 
     /*
-        =====================================
-        2. 슌쯔
-        =====================================
+        ★★★
     */
 
-    const index =
-        TILE_TYPES.indexOf(tile);
+    if (wildCount >= 3) {
 
+        if (
+            canMakeMentsuWithWild(
+                counts,
+                wildCount - 3,
+                requiredMentsu - 1
+            )
+        ) {
+
+            return true;
+        }
+    }
+
+
+    /* =====================================================
+       2. 슌쯔
+       ===================================================== */
 
     /*
-        숫자패만 가능
+        자패는 슌쯔 불가능
     */
 
     if (
-        index >= 0 &&
-        index <= 26
+        index < 0 ||
+        index > 26
     ) {
 
-        const number =
-            index % 9;
+        return false;
+    }
 
 
-        if (
-            number <= 6
-        ) {
-
-            const tile2 =
-                TILE_TYPES[index + 1];
-
-            const tile3 =
-                TILE_TYPES[index + 2];
+    const number =
+        index % 9;
 
 
-            const count2 =
-                counts[tile2] || 0;
+    /*
+        현재 패를 기준으로
+        정상적인 슌쯔 시작
 
-            const count3 =
-                counts[tile3] || 0;
+        예:
+        1 → 123
+        2 → 234
+        ...
+        7 → 789
+    */
+
+    if (number <= 6) {
+
+        const tile2 =
+            TILE_TYPES[index + 1];
+
+        const tile3 =
+            TILE_TYPES[index + 2];
 
 
-            let missing = 0;
+        const count2 =
+            counts[tile2] || 0;
+
+        const count3 =
+            counts[tile3] || 0;
 
 
-            if (
-                count2 === 0
-            ) {
+        /*
+            필요한 와일드패 개수
+        */
 
-                missing++;
+        let missing = 0;
 
+
+        if (count2 === 0) {
+            missing++;
+        }
+
+        if (count3 === 0) {
+            missing++;
+        }
+
+
+        /*
+            ★로 부족한 패를 채울 수 있는 경우
+        */
+
+        if (wildCount >= missing) {
+
+            counts[tile]--;
+
+            if (count2 > 0) {
+                counts[tile2]--;
+            }
+
+            if (count3 > 0) {
+                counts[tile3]--;
             }
 
 
             if (
-                count3 === 0
+                canMakeMentsuWithWild(
+                    counts,
+                    wildCount - missing,
+                    requiredMentsu - 1
+                )
             ) {
 
-                missing++;
+                counts[tile]++;
 
+                if (count2 > 0) {
+                    counts[tile2]++;
+                }
+
+                if (count3 > 0) {
+                    counts[tile3]++;
+                }
+
+                return true;
             }
 
 
             /*
-                필요한 만큼
-                ★를 사용할 수 있는 경우
+                원상복구
             */
 
-            if (
-                wildCount >= missing
-            ) {
+            counts[tile]++;
 
-                counts[tile]--;
-
-
-                if (
-                    count2 > 0
-                ) {
-
-                    counts[tile2]--;
-
-                }
-
-
-                if (
-                    count3 > 0
-                ) {
-
-                    counts[tile3]--;
-
-                }
-
-
-                if (
-                    canMakeMentsuWithWild(
-                        counts,
-                        wildCount - missing,
-                        requiredMentsu - 1
-                    )
-                ) {
-
-                    counts[tile]++;
-
-
-                    if (
-                        count2 > 0
-                    ) {
-
-                        counts[tile2]++;
-
-                    }
-
-
-                    if (
-                        count3 > 0
-                    ) {
-
-                        counts[tile3]++;
-
-                    }
-
-
-                    return true;
-
-                }
-
-
-                /*
-                    원상복구
-                */
-
-                counts[tile]++;
-
-
-                if (
-                    count2 > 0
-                ) {
-
-                    counts[tile2]++;
-
-                }
-
-
-                if (
-                    count3 > 0
-                ) {
-
-                    counts[tile3]++;
-
-                }
-
+            if (count2 > 0) {
+                counts[tile2]++;
             }
 
+            if (count3 > 0) {
+                counts[tile3]++;
+            }
         }
-
     }
 
 
-    return false;
+    /*
+        =====================================
+        화료 불가능
+        =====================================
+    */
 
+    return false;
 }
 
 
