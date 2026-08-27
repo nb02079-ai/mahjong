@@ -444,7 +444,7 @@ function drawTile() {
         return;
     }
 
-    if (turnCount >= MAX_TURN) {
+    if (turnCount >= MAX_TURNS) {
 
         endGame("15회의 쯔모 기회를 모두 사용했습니다.");
 
