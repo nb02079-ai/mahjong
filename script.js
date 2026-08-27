@@ -1060,14 +1060,40 @@ function checkActionsAfterDraw() {
 function canWin(hand) {
 
     /*
-        현재는 기본적인
-        4멘츠 + 1머리 형태만 검사.
+        깡은 이미 완성된 몸통으로 처리한다.
 
-        와일드패 / 치또이츠 /
-        국사무쌍 등은 다음 단계에서 추가.
+        예:
+        깡 1개
+        + 일반 몸통 3개
+        + 머리 1개
+
+        → 화료 가능
     */
 
-    if (hand.length !== 14) {
+
+    /*
+        현재 손패에서
+        깡으로 사용된 패는 제외한다.
+    */
+
+    const kanTileCount =
+        kanMelds.length * 4;
+
+
+    /*
+        일반 손패 + 쯔모패의 개수 확인
+
+        깡이 없으면 14장
+        깡이 1개면 10장
+        깡이 2개면 6장
+        ...
+    */
+
+    const expectedHandCount =
+        14 - kanTileCount;
+
+
+    if (hand.length !== expectedHandCount) {
 
         return false;
 
@@ -1075,9 +1101,7 @@ function canWin(hand) {
 
 
     /*
-        와일드패가 있으면
-        일단 화료 가능성만 표시하지 않고
-        다음 단계에서 최적 조합 탐색.
+        와일드패는 아직 화료 판정에 사용하지 않는다.
     */
 
     if (hand.includes("★")) {
@@ -1087,7 +1111,23 @@ function canWin(hand) {
     }
 
 
-    return isStandardHand(hand);
+    /*
+        필요한 일반 몸통 개수
+
+        깡이 0개 → 4몸통
+        깡이 1개 → 3몸통
+        깡이 2개 → 2몸통
+        ...
+    */
+
+    const requiredMentsu =
+        4 - kanMelds.length;
+
+
+    return isStandardHand(
+        hand,
+        requiredMentsu
+    );
 
 }
 
