@@ -1180,19 +1180,22 @@ function isStandardHand(hand, requiredMentsu) {
    19. 멘츠 구성 가능 여부
 ========================================================= */
 
-function canMakeFourMentsu(counts) {
+function canMakeMentsu(counts, requiredMentsu) {
 
-    const remaining =
-        Object.values(counts)
-            .reduce(
-                (sum, value) => sum + value,
-                0
-            );
+    /*
+        필요한 몸통을 모두 만들었는지 확인
+    */
 
+    if (requiredMentsu === 0) {
 
-    if (remaining === 0) {
+        const remaining =
+            Object.values(counts)
+                .reduce(
+                    (sum, value) => sum + value,
+                    0
+                );
 
-        return true;
+        return remaining === 0;
 
     }
 
@@ -1210,13 +1213,15 @@ function canMakeFourMentsu(counts) {
 
     if (!tile) {
 
-        return true;
+        return false;
 
     }
 
 
     /*
+        =====================================
         1. 커쯔
+        =====================================
     */
 
     if (counts[tile] >= 3) {
@@ -1224,7 +1229,12 @@ function canMakeFourMentsu(counts) {
         counts[tile] -= 3;
 
 
-        if (canMakeFourMentsu(counts)) {
+        if (
+            canMakeMentsu(
+                counts,
+                requiredMentsu - 1
+            )
+        ) {
 
             return true;
 
@@ -1237,22 +1247,29 @@ function canMakeFourMentsu(counts) {
 
 
     /*
+        =====================================
         2. 슌쯔
-        숫자패인지 확인
+        =====================================
     */
 
     const index =
         TILE_TYPES.indexOf(tile);
 
 
-    if (index >= 0 && index <= 26) {
+    /*
+        숫자패만 슌쯔 가능
+    */
 
-        const suitStart =
-            Math.floor(index / 9) * 9;
+    if (index >= 0 && index <= 26) {
 
         const number =
             index % 9;
 
+
+        /*
+            7, 8, 9부터는
+            시작패가 될 수 없음
+        */
 
         if (number <= 6) {
 
@@ -1273,7 +1290,12 @@ function canMakeFourMentsu(counts) {
                 counts[tile3]--;
 
 
-                if (canMakeFourMentsu(counts)) {
+                if (
+                    canMakeMentsu(
+                        counts,
+                        requiredMentsu - 1
+                    )
+                ) {
 
                     return true;
 
