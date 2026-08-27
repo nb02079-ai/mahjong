@@ -1586,6 +1586,264 @@ function isWildStandardHand(counts, wildCount) {
 }
 
 /* =========================================================
+   와일드패 포함 몸통 구성
+========================================================= */
+
+function canMakeMentsuWithWild(
+    counts,
+    wildCount
+) {
+
+    /*
+        남은 패가 하나도 없으면
+        모든 몸통이 완성된 것
+    */
+
+    const remaining =
+        Object.values(counts)
+            .reduce(
+                (sum, value) => sum + value,
+                0
+            );
+
+
+    if (remaining === 0) {
+
+        /*
+            남은 ★가 3장 단위로
+            몸통을 만들 수 있어야 한다.
+        */
+
+        return wildCount % 3 === 0;
+
+    }
+
+
+    /*
+        가장 앞쪽의 패를 찾는다.
+    */
+
+    const tile =
+        Object.keys(counts)
+            .find(
+                key => counts[key] > 0
+            );
+
+
+    if (!tile) {
+
+        return wildCount % 3 === 0;
+
+    }
+
+
+    /*
+        =====================================
+        1. 일반 커쯔
+        =====================================
+    */
+
+    if (counts[tile] >= 3) {
+
+        counts[tile] -= 3;
+
+
+        if (
+            canMakeMentsuWithWild(
+                counts,
+                wildCount
+            )
+        ) {
+
+            return true;
+
+        }
+
+
+        counts[tile] += 3;
+
+    }
+
+
+    /*
+        =====================================
+        2. ★를 이용한 커쯔
+        =====================================
+
+        예:
+
+        5만 5만 ★
+
+        → 555만
+    */
+
+    if (counts[tile] === 2 && wildCount >= 1) {
+
+        counts[tile] -= 2;
+
+
+        if (
+            canMakeMentsuWithWild(
+                counts,
+                wildCount - 1
+            )
+        ) {
+
+            return true;
+
+        }
+
+
+        counts[tile] += 2;
+
+    }
+
+
+    /*
+        5만 ★ ★
+
+        → 555만
+    */
+
+    if (counts[tile] === 1 && wildCount >= 2) {
+
+        counts[tile]--;
+
+
+        if (
+            canMakeMentsuWithWild(
+                counts,
+                wildCount - 2
+            )
+        ) {
+
+            return true;
+
+        }
+
+
+        counts[tile]++;
+
+    }
+
+
+    /*
+        =====================================
+        3. 슌쯔
+        =====================================
+    */
+
+    const index =
+        TILE_TYPES.indexOf(tile);
+
+
+    /*
+        숫자패만 슌쯔 가능
+    */
+
+    if (index >= 0 && index <= 26) {
+
+        const number =
+            index % 9;
+
+
+        /*
+            8, 9로 시작하는 슌쯔는 불가능
+        */
+
+        if (number <= 6) {
+
+            const tile2 =
+                TILE_TYPES[index + 1];
+
+            const tile3 =
+                TILE_TYPES[index + 2];
+
+
+            const count2 =
+                counts[tile2] || 0;
+
+            const count3 =
+                counts[tile3] || 0;
+
+
+            /*
+                필요한 ★ 개수 계산
+            */
+
+            let missing = 0;
+
+
+            if (count2 === 0) {
+                missing++;
+            }
+
+
+            if (count3 === 0) {
+                missing++;
+            }
+
+
+            /*
+                필요한 ★ 개수만큼
+                사용할 수 있는 경우
+            */
+
+            if (wildCount >= missing) {
+
+                counts[tile]--;
+
+
+                if (count2 > 0) {
+                    counts[tile2]--;
+                }
+
+
+                if (count3 > 0) {
+                    counts[tile3]--;
+                }
+
+
+                if (
+                    canMakeMentsuWithWild(
+                        counts,
+                        wildCount - missing
+                    )
+                ) {
+
+                    return true;
+
+                }
+
+
+                /*
+                    원상복구
+                */
+
+                counts[tile]++;
+
+
+                if (count2 > 0) {
+                    counts[tile2]++;
+                }
+
+
+                if (count3 > 0) {
+                    counts[tile3]++;
+                }
+
+            }
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
+/* =========================================================
    18. 기본형 화료 검사
 ========================================================= */
 
