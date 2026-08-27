@@ -1133,33 +1133,19 @@ function checkActionsAfterDraw() {
    18. 화료 판정
 ========================================================= */
 
-/*
-    공개 깡이 없으면
-
-    4몸통 + 1머리
-
-    공개 깡이 1개면
-
-    3몸통 + 1머리
-
-    공개 깡이 2개면
-
-    2몸통 + 1머리
-
-    ...
-
-    공개 깡도 이미 몸통으로 계산한다.
-*/
-
 function canWin(hand) {
+
+    /*
+        공개 깡은 이미 몸통으로 계산되므로
+        손패에서 필요한 몸통 수를 계산한다.
+    */
 
     const requiredMentsu =
         4 - kanMelds.length;
 
 
     /*
-        손패 + 쯔모패의
-        일반 패 개수 확인
+        현재 손패의 ★ 개수
     */
 
     const wildCount =
@@ -1168,6 +1154,10 @@ function canWin(hand) {
         ).length;
 
 
+    /*
+        일반패만 분리
+    */
+
     const normalTiles =
         hand.filter(
             tile => tile !== "★"
@@ -1175,25 +1165,31 @@ function canWin(hand) {
 
 
     /*
-        필요한 장수 검사
+        화료에 필요한 총 패 수
 
-        몸통 3장 × 필요 몸통
-        + 머리 2장
-        = 필요한 총 일반/와일드 패 수
+        몸통:
+        requiredMentsu × 3
 
-        단, 공개 깡은 이미 밖에서
-        계산되므로 현재 손패는
-        필요한 몸통 수만큼만 검사.
+        머리:
+        2
+
+        예:
+        깡 0 → 14장
+        깡 1 → 11장
+        깡 2 → 8장
     */
 
     const requiredTiles =
         requiredMentsu * 3 + 2;
 
 
+    /*
+        손패의 총 개수가 정확히
+        필요한 개수와 같아야 한다.
+    */
+
     if (
-        normalTiles.length +
-        wildCount !==
-        requiredTiles
+        hand.length !== requiredTiles
     ) {
 
         return false;
@@ -1201,13 +1197,17 @@ function canWin(hand) {
     }
 
 
+    /*
+        일반패 개수를 계산
+    */
+
     const counts =
         countTiles(normalTiles);
 
 
     /*
-        와일드패가 없으면
-        일반 화료 판정
+        ★가 하나도 없다면
+        일반 마작 화료 판정
     */
 
     if (wildCount === 0) {
@@ -1221,8 +1221,8 @@ function canWin(hand) {
 
 
     /*
-        와일드패가 있으면
-        와일드 포함 판정
+        ★가 있으면
+        모든 가능한 ★ 배치를 탐색
     */
 
     return isWildStandardHand(
