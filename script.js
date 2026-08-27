@@ -144,6 +144,10 @@ function startGame() {
 
     console.log("게임 시작");
 
+    gameEnded = false;
+
+    discardButton.disabled = false;
+
     initializeTiles();
 
     shuffle(wall);
@@ -163,7 +167,6 @@ function startGame() {
         drawTile();
     }, 300);
 }
-
 
 /* =========================================================
    6. 패 생성
