@@ -296,8 +296,24 @@ body {
    DORA
 ========================= */
 
-.dora-section {
+.info-row {
     margin-bottom: 20px;
+
+    display: flex;
+
+    gap: 24px;
+}
+
+.dora-section {
+    flex: 1;
+
+    min-width: 0;
+}
+
+.tenpai-section {
+    flex: 1;
+
+    min-width: 0;
 }
 
 /* =========================
@@ -311,9 +327,57 @@ body {
 
     align-items: center;
 
-    justify-content: center;
+    justify-content: flex-start;
 
     gap: 8px;
+}
+
+
+/* =========================
+   TENPAI 대기패
+========================= */
+
+.tenpai-waits {
+    min-height: 75px;
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 6px;
+}
+
+.tenpai-wait-tile {
+    width: 40px;
+    height: 53px;
+
+    flex-shrink: 0;
+
+    cursor: default;
+}
+
+.tenpai-wait-tile:hover {
+    transform: none;
+
+    box-shadow: none;
+}
+
+.tenpai-empty {
+    color: #6f8a76;
+
+    font-size: 12px;
+
+    text-align: right;
+
+    width: 100%;
+}
+
+#tenpai-count {
+    color: #d4af37;
 }
 
 
@@ -804,6 +868,21 @@ body {
 
     .game-title h1 {
         font-size: 21px;
+    }
+
+    .info-row {
+        flex-direction: column;
+
+        gap: 14px;
+    }
+
+    .dora-indicators,
+    .tenpai-waits {
+        justify-content: center;
+    }
+
+    .tenpai-empty {
+        text-align: center;
     }
 
     .game-info {

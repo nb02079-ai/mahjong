@@ -1016,6 +1016,12 @@ const doraIndicatorsElement =
 const doraCountElement =
     document.getElementById("dora-count");
 
+const tenpaiWaitsElement =
+    document.getElementById("tenpai-waits");
+
+const tenpaiCountElement =
+    document.getElementById("tenpai-count");
+
 const gameStatusElement =
     document.getElementById("game-status");
 
@@ -3428,9 +3434,22 @@ function findMeldCombinations(
     }
 
 
+    /*
+        객체 키 삽입 순서가 아니라
+        패 값(오름차순)으로 골라야 한다.
+
+        그렇지 않으면 같은 패가 서로 다른 두 슌쯔에
+        나뉘어 들어가야 하는 경우(예: 4·5·6·6·7·8)
+        낮은 쪽 슌쯔의 시작 패보다 높은 패가 먼저
+        선택돼서 유효한 조합을 놓치는 버그가 있었다.
+    */
+
     const tile =
         Object.keys(counts)
-            .find(key => counts[key] > 0);
+            .filter(key => counts[key] > 0)
+            .sort(
+                (a, b) => tileIndexOf(a) - tileIndexOf(b)
+            )[0];
 
 
     /*
@@ -4194,6 +4213,8 @@ function renderAll() {
 
     renderDora();
 
+    renderTenpaiWaits();
+
     renderInfo();
 
     updateMulliganButton();
@@ -4774,6 +4795,172 @@ function renderDora() {
 
     doraCountElement.textContent =
         `${doraIndicators.length} / ${DEAD_WALL_SIZE}`;
+
+}
+
+
+/* =========================================================
+   텐파이 대기패
+
+   지금 손패(쯔모하기 전, 딱 1장 모자란 상태)에
+   어떤 패가 들어오면 화료할 수 있는지 계산한다.
+   34종 패 + 와일드를 하나씩 넣어보고
+   실제로 getWinResult()가 성립하는 것만 모은다.
+========================================================= */
+
+function getTenpaiWaits() {
+
+    if (drawnTile !== null) {
+
+        return null;
+
+    }
+
+    if (peekCandidates) {
+
+        return null;
+
+    }
+
+    const requiredMentsu =
+        4 - kanMelds.length;
+
+    const requiredTiles =
+        requiredMentsu * 3 + 2;
+
+
+    /*
+        손패가 "정확히 한 장 모자란" 상태일 때만
+        텐파이 후보로 검사한다.
+    */
+
+    if (playerHand.length !== requiredTiles - 1) {
+
+        return null;
+
+    }
+
+    const candidates = [
+        ...TILE_TYPES,
+        "★"
+    ];
+
+    const waits = [];
+
+    candidates.forEach(candidate => {
+
+        const testHand = [
+            ...playerHand,
+            candidate
+        ];
+
+        const result =
+            getWinResult(testHand, {
+                isFirstTurn: false,
+                isRinshan: false,
+                isHaitei: false
+            });
+
+        if (result) {
+
+            waits.push(candidate);
+
+        }
+
+    });
+
+    return waits;
+
+}
+
+
+function renderTenpaiWaits() {
+
+    tenpaiWaitsElement.innerHTML =
+        "";
+
+    const waits =
+        getTenpaiWaits();
+
+    if (waits === null) {
+
+        tenpaiCountElement.textContent =
+            "";
+
+        const notice =
+            document.createElement("div");
+
+        notice.classList.add(
+            "tenpai-empty"
+        );
+
+        notice.textContent =
+            "쯔모 전 손패 기준으로 표시돼요.";
+
+        tenpaiWaitsElement.appendChild(
+            notice
+        );
+
+        return;
+
+    }
+
+    if (waits.length === 0) {
+
+        tenpaiCountElement.textContent =
+            "0종";
+
+        const notice =
+            document.createElement("div");
+
+        notice.classList.add(
+            "tenpai-empty"
+        );
+
+        notice.textContent =
+            "지금은 대기 중인 패가 없어요.";
+
+        tenpaiWaitsElement.appendChild(
+            notice
+        );
+
+        return;
+
+    }
+
+    tenpaiCountElement.textContent =
+        `${waits.length}종`;
+
+    waits.forEach(waitTile => {
+
+        const element =
+            document.createElement("div");
+
+        element.classList.add(
+            "tile",
+            "tenpai-wait-tile"
+        );
+
+        element.innerHTML =
+            buildTileSVG(waitTile) ||
+            `<span>${waitTile}</span>`;
+
+        const suitClass =
+            getSuitClass(waitTile);
+
+        if (suitClass) {
+
+            element.classList.add(
+                suitClass
+            );
+
+        }
+
+        tenpaiWaitsElement.appendChild(
+            element
+        );
+
+    });
 
 }
 
