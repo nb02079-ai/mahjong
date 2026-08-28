@@ -126,6 +126,10 @@
                     화료
                 </button>
 
+                <button id="discard-history-button" class="action-button discard-history-button">
+                    버림패 확인
+                </button>
+
             </section>
 
         </main>
@@ -154,6 +158,36 @@
             </div>
 
         </footer>
+
+    </div>
+
+
+    <!-- =========================
+         DISCARD HISTORY OVERLAY
+         (버림패 확인)
+    ========================== -->
+
+    <div id="discard-history-overlay" class="discard-overlay hidden">
+
+        <div class="discard-modal">
+
+            <div class="discard-modal-header">
+
+                <span>버려진 패 (<span id="discard-history-count">0</span>장)</span>
+
+                <button id="close-discard-history" class="close-button">
+                    ✕
+                </button>
+
+            </div>
+
+            <div id="discard-history-tiles" class="discard-tiles">
+
+                <!-- JS가 정렬된 버림패를 채움 -->
+
+            </div>
+
+        </div>
 
     </div>
 

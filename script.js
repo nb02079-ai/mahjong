@@ -8,7 +8,7 @@
    1. 게임 설정
 ========================================================= */
 
-const MAX_TURNS = 75;
+const MAX_TURNS = 70;
 const WILD_COUNT = 2;
 const DEAD_WALL_SIZE = 5;
 
@@ -80,6 +80,12 @@ let kanCount = 0;
 let score = 0;
 
 let gameEnded = false;
+
+/*
+    버려진 패 기록 (정렬해서 보여주기 위한 용도)
+*/
+
+let discardedTiles = [];
 
 
 /*
@@ -156,6 +162,21 @@ const restartButton =
 const wildCountElement =
     document.getElementById("wild-count");
 
+const discardHistoryButton =
+    document.getElementById("discard-history-button");
+
+const discardHistoryOverlayElement =
+    document.getElementById("discard-history-overlay");
+
+const discardHistoryTilesElement =
+    document.getElementById("discard-history-tiles");
+
+const discardHistoryCountElement =
+    document.getElementById("discard-history-count");
+
+const closeDiscardHistoryButton =
+    document.getElementById("close-discard-history");
+
 
 /* =========================================================
    5. 게임 시작
@@ -178,6 +199,8 @@ function startGame() {
     kanCount = 0;
 
     score = 0;
+
+    discardedTiles = [];
 
     doraIndicators = [];
 
@@ -691,6 +714,15 @@ function discardTile() {
 
     console.log(
         "타패:",
+        discardedTile
+    );
+
+
+    /*
+        버림패 기록에 추가
+    */
+
+    discardedTiles.push(
         discardedTile
     );
 
@@ -3045,6 +3077,89 @@ function hideResult() {
 
 
 /* =========================================================
+   버림패 확인
+========================================================= */
+
+function renderDiscardHistory() {
+
+    discardHistoryTilesElement.innerHTML =
+        "";
+
+    discardHistoryCountElement.textContent =
+        discardedTiles.length;
+
+
+    if (discardedTiles.length === 0) {
+
+        const emptyMessage =
+            document.createElement("div");
+
+        emptyMessage.classList.add(
+            "discard-empty"
+        );
+
+        emptyMessage.textContent =
+            "아직 버린 패가 없습니다.";
+
+        discardHistoryTilesElement.appendChild(
+            emptyMessage
+        );
+
+        return;
+
+    }
+
+
+    /*
+        버려진 순서가 아니라
+        정렬된 순서로 보여준다.
+    */
+
+    const sortedDiscards =
+        sortHand(discardedTiles);
+
+    sortedDiscards.forEach(tile => {
+
+        const tileElement =
+            document.createElement("div");
+
+        tileElement.classList.add(
+            "tile"
+        );
+
+        tileElement.innerHTML =
+            `<span>${tile}</span>`;
+
+        discardHistoryTilesElement.appendChild(
+            tileElement
+        );
+
+    });
+
+}
+
+
+function showDiscardHistory() {
+
+    renderDiscardHistory();
+
+    discardHistoryOverlayElement.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+function hideDiscardHistory() {
+
+    discardHistoryOverlayElement.classList.add(
+        "hidden"
+    );
+
+}
+
+
+/* =========================================================
    셔플
 ========================================================= */
 
@@ -3163,6 +3278,18 @@ restartButton.addEventListener(
         startGame();
 
     }
+);
+
+
+discardHistoryButton.addEventListener(
+    "click",
+    showDiscardHistory
+);
+
+
+closeDiscardHistoryButton.addEventListener(
+    "click",
+    hideDiscardHistory
 );
 
 

@@ -779,3 +779,135 @@ body {
 .restart-button {
     min-width: 160px;
 }
+
+
+/* =========================
+   DISCARD HISTORY BUTTON
+========================= */
+
+.discard-history-button {
+    background: #2b2e33;
+
+    color: #b8bdc4;
+
+    font-weight: 600;
+}
+
+
+/* =========================
+   DISCARD HISTORY OVERLAY
+========================= */
+
+.discard-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(10, 11, 13, 0.72);
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    z-index: 1000;
+}
+
+.discard-overlay.hidden {
+    display: none;
+}
+
+.discard-modal {
+    width: 100%;
+    max-width: 560px;
+    max-height: 80vh;
+
+    background: #24272b;
+
+    border: 1px solid #3b3f44;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.5);
+
+    padding: 24px 28px 28px;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.discard-modal-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 18px;
+
+    color: #d9dadd;
+
+    font-size: 15px;
+
+    font-weight: 700;
+}
+
+.close-button {
+    width: 30px;
+    height: 30px;
+
+    border: 1px solid #555a61;
+
+    border-radius: 8px;
+
+    background: #30343a;
+
+    color: #d9dadd;
+
+    font-size: 14px;
+
+    cursor: pointer;
+}
+
+.close-button:hover {
+    background: #3a3f45;
+
+    border-color: #70757c;
+}
+
+.discard-tiles {
+    overflow-y: auto;
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+    padding: 4px;
+}
+
+.discard-tiles .tile {
+    width: 42px;
+    height: 56px;
+
+    font-size: 32px;
+
+    cursor: default;
+}
+
+.discard-tiles .tile:hover {
+    transform: none;
+
+    box-shadow: none;
+}
+
+.discard-empty {
+    color: #8d9298;
+
+    font-size: 13px;
+
+    text-align: center;
+
+    padding: 20px 0;
+}
