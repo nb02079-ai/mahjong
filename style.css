@@ -87,11 +87,54 @@ body {
 }
 
 .game-title p {
-    margin-top: 6px;
-
     color: #999da3;
 
     font-size: 14px;
+}
+
+.game-subtitle-row {
+    margin-top: 6px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+/* =========================
+   TEXT LINK BUTTON
+   (역 목록 / 버림패 확인처럼
+    보조적인 버튼에 쓰는 가벼운 스타일)
+========================= */
+
+.text-link-button {
+    padding: 0;
+
+    border: none;
+
+    background: none;
+
+    color: #8d9298;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.5px;
+
+    text-decoration: underline;
+
+    text-underline-offset: 3px;
+
+    cursor: pointer;
+
+    transition: color 0.15s ease;
+}
+
+.text-link-button:hover {
+    color: #d9dadd;
 }
 
 
@@ -342,6 +385,14 @@ body {
 
 .hand-section {
     margin-top: 10px;
+
+    text-align: center;
+}
+
+.hand-section .discard-history-button {
+    display: inline-block;
+
+    margin-top: 4px;
 }
 
 .player-hand {
@@ -824,19 +875,6 @@ body {
 
 
 /* =========================
-   DISCARD HISTORY BUTTON
-========================= */
-
-.discard-history-button {
-    background: #2b2e33;
-
-    color: #b8bdc4;
-
-    font-weight: 600;
-}
-
-
-/* =========================
    DISCARD HISTORY OVERLAY
 ========================= */
 
@@ -952,19 +990,6 @@ body {
     text-align: center;
 
     padding: 20px 0;
-}
-
-
-/* =========================
-   YAKU GUIDE BUTTON
-========================= */
-
-.yaku-guide-button {
-    background: #2b2e33;
-
-    color: #b8bdc4;
-
-    font-weight: 600;
 }
 
 

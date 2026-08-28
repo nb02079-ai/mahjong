@@ -20,7 +20,12 @@
 
             <div class="game-title">
                 <h1>SOLO MAHJONG</h1>
-                <p>1인용 마작 퍼즐</p>
+                <div class="game-subtitle-row">
+                    <p>1인용 마작 퍼즐</p>
+                    <button id="yaku-guide-button" class="text-link-button">
+                        역 목록
+                    </button>
+                </div>
             </div>
 
             <div class="game-info">
@@ -92,6 +97,10 @@
         <!-- 실제 손패 -->
         <div id="player-hand" class="player-hand"></div>
 
+        <button id="discard-history-button" class="text-link-button discard-history-button">
+            버림패 확인
+        </button>
+
             </section>
 
 
@@ -124,14 +133,6 @@
 
                 <button id="win-button" class="action-button win-button hidden">
                     화료
-                </button>
-
-                <button id="discard-history-button" class="action-button discard-history-button">
-                    버림패 확인
-                </button>
-
-                <button id="yaku-guide-button" class="action-button yaku-guide-button">
-                    역 목록
                 </button>
 
             </section>
