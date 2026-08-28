@@ -32,6 +32,9 @@
                     <button id="score-history-button" class="text-link-button">
                         점수 기록
                     </button>
+                    <button id="sound-toggle-button" class="text-link-button">
+                        🔊 소리 끄기
+                    </button>
                 </div>
             </div>
 
@@ -457,7 +460,13 @@
 
     <div id="result-overlay" class="result-overlay hidden">
 
+        <div id="result-burst" class="result-burst"></div>
+
+        <div id="result-confetti" class="result-confetti"></div>
+
         <div class="result-modal">
+
+            <div id="result-tier-badge" class="result-tier-badge hidden"></div>
 
             <div id="result-title" class="result-title"></div>
 

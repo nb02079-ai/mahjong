@@ -61,6 +61,8 @@ body {
 
     line-height: 1.5;
 
+    word-break: keep-all;
+
     display: flex;
     justify-content: center;
     align-items: center;
@@ -130,10 +132,17 @@ body {
     margin-top: 6px;
 
     display: flex;
+    flex-wrap: wrap;
 
     align-items: center;
 
-    gap: 10px;
+    gap: 6px 10px;
+}
+
+.game-subtitle-row p {
+    word-break: keep-all;
+
+    white-space: nowrap;
 }
 
 
@@ -144,6 +153,8 @@ body {
 ========================= */
 
 .text-link-button {
+    min-height: 44px;
+
     padding: 7px 16px;
 
     border: 1px solid #3d5747;
@@ -778,7 +789,13 @@ body {
     }
 
     .game-header {
-        padding: 20px;
+        padding: 16px 18px;
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 12px;
     }
 
     .game-title h1 {
@@ -786,11 +803,15 @@ body {
     }
 
     .game-info {
-        gap: 15px;
+        width: 100%;
+
+        gap: 12px;
+
+        justify-content: space-between;
     }
 
     .info-box {
-        min-width: 80px;
+        min-width: 0;
     }
 
     .game-board {
@@ -872,6 +893,26 @@ body {
         min-height: 46px;
 
         padding: 8px 35px;
+    }
+
+
+    /*
+        전체화면 오버레이(시작화면/결과/상점/모달)가
+        내용보다 화면이 짧을 때 위쪽이 잘리지 않도록
+        중앙 정렬 대신 위쪽부터 채우고 스크롤되게 한다.
+    */
+
+    .result-overlay,
+    .discard-overlay,
+    .yaku-guide-overlay,
+    .score-history-overlay,
+    .start-overlay,
+    .shop-overlay {
+        align-items: flex-start !important;
+
+        padding-top: 24px;
+
+        padding-bottom: 24px;
     }
 
 }
@@ -1010,6 +1051,8 @@ body {
 
     inset: 0;
 
+    overflow-y: auto;
+
     background: rgba(6, 14, 10, 0.75);
 
     display: flex;
@@ -1097,6 +1140,159 @@ body {
     color: #c7d4c9;
 }
 
+
+/* =========================
+   화료 등급 연출
+========================= */
+
+.result-burst {
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    background: radial-gradient(
+        circle at 50% 45%,
+        rgba(212, 175, 55, 0.55),
+        rgba(212, 175, 55, 0.15) 35%,
+        transparent 65%
+    );
+}
+
+.result-burst.active {
+    animation: resultBurstFlash 0.9s ease-out;
+}
+
+@keyframes resultBurstFlash {
+
+    0% {
+        opacity: 0;
+
+        transform: scale(0.3);
+    }
+
+    30% {
+        opacity: 1;
+
+        transform: scale(1.15);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform: scale(1.6);
+    }
+
+}
+
+.result-confetti {
+    position: absolute;
+
+    inset: 0;
+
+    overflow: hidden;
+
+    pointer-events: none;
+}
+
+.confetti-piece {
+    position: absolute;
+
+    top: 42%;
+    left: 50%;
+
+    width: 8px;
+    height: 14px;
+
+    opacity: 0;
+
+    border-radius: 2px;
+
+    animation: confettiFly 1.1s ease-out forwards;
+}
+
+@keyframes confettiFly {
+
+    0% {
+        opacity: 1;
+
+        transform:
+            translate(0, 0)
+            rotate(0deg);
+    }
+
+    100% {
+        opacity: 0;
+
+        transform:
+            translate(var(--dx), var(--dy))
+            rotate(var(--rot));
+    }
+
+}
+
+.result-tier-badge {
+    font-family: var(--font-display);
+
+    font-size: 22px;
+
+    font-weight: 700;
+
+    letter-spacing: 2px;
+
+    color: #ffd76a;
+
+    text-shadow:
+        0 0 12px rgba(255, 215, 106, 0.8);
+
+    margin-bottom: 10px;
+
+    animation: tierBadgePulse 1s ease-in-out infinite;
+}
+
+@keyframes tierBadgePulse {
+
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+
+}
+
+@keyframes resultModalShake {
+
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-6px, 2px); }
+    20% { transform: translate(6px, -2px); }
+    30% { transform: translate(-8px, 3px); }
+    40% { transform: translate(8px, -3px); }
+    50% { transform: translate(-5px, 2px); }
+    60% { transform: translate(5px, -2px); }
+    70% { transform: translate(-3px, 1px); }
+    80% { transform: translate(3px, -1px); }
+    90% { transform: translate(-1px, 0); }
+
+}
+
+.result-modal.shake {
+    animation:
+        resultModalPop 0.3s ease,
+        resultModalShake 0.5s ease 0.2s;
+}
+
+/* 등급이 높을수록 발광 반경을 조금씩 키운다 */
+
+.result-tier-4 .result-title.win,
+.result-tier-5 .result-title.win {
+    animation: winTitleGlow 1s ease-in-out infinite;
+}
+
 .result-message {
     color: #d3ddd5;
 
@@ -1132,6 +1328,8 @@ body {
     position: fixed;
 
     inset: 0;
+
+    overflow-y: auto;
 
     background: rgba(6, 14, 10, 0.75);
 
@@ -1289,6 +1487,8 @@ body {
 
     inset: 0;
 
+    overflow-y: auto;
+
     background: rgba(6, 14, 10, 0.75);
 
     display: flex;
@@ -1417,6 +1617,8 @@ body {
     position: fixed;
 
     inset: 0;
+
+    overflow-y: auto;
 
     background: rgba(6, 14, 10, 0.75);
 
@@ -1559,6 +1761,8 @@ body {
 
     inset: 0;
 
+    overflow-y: auto;
+
     background-color: #0d1512;
 
     background-image:
@@ -1693,6 +1897,8 @@ body {
     position: fixed;
 
     inset: 0;
+
+    overflow-y: auto;
 
     background: rgba(6, 14, 10, 0.75);
 

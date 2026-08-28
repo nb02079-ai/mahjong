@@ -8,7 +8,7 @@
    1. 게임 설정
 ========================================================= */
 
-const BASE_MAX_TURNS = 70;
+const BASE_MAX_TURNS = 30;
 
 let MAX_TURNS = BASE_MAX_TURNS;
 
@@ -72,6 +72,264 @@ const SHOP_ITEMS = [
         maxPurchase: 2
     }
 ];
+
+
+/* =========================================================
+   1.5 사운드 이펙트
+
+   외부 음원 파일 없이 Web Audio API로
+   짧은 톤을 직접 합성해서 재생한다.
+========================================================= */
+
+const SOUND_STORAGE_KEY = "soloMahjongSoundEnabled";
+
+let audioContext = null;
+
+let soundEnabled = true;
+
+try {
+
+    const savedSoundPref =
+        localStorage.getItem(SOUND_STORAGE_KEY);
+
+    if (savedSoundPref !== null) {
+
+        soundEnabled = savedSoundPref === "true";
+
+    }
+
+} catch (error) {
+
+    console.error(
+        "소리 설정을 불러오지 못했습니다.",
+        error
+    );
+
+}
+
+
+function getAudioContext() {
+
+    if (!audioContext) {
+
+        const AudioContextClass =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (!AudioContextClass) {
+
+            return null;
+
+        }
+
+        audioContext =
+            new AudioContextClass();
+
+    }
+
+    if (audioContext.state === "suspended") {
+
+        audioContext.resume();
+
+    }
+
+    return audioContext;
+
+}
+
+
+/*
+    playTone(주파수, 길이(초), 파형, 음량, 시작 지연(초))
+
+    짧은 엔벨로프(빠르게 커졌다가 부드럽게 사라짐)를 적용해
+    딱딱한 삐- 소리가 아니라 짧은 "톡/딩" 느낌으로 만든다.
+*/
+
+function playTone(
+    frequency,
+    duration,
+    waveType,
+    volume,
+    delay
+) {
+
+    if (!soundEnabled) {
+
+        return;
+
+    }
+
+    try {
+
+        const ctx = getAudioContext();
+
+        if (!ctx) {
+
+            return;
+
+        }
+
+        const startTime =
+            ctx.currentTime + (delay || 0);
+
+        const oscillator =
+            ctx.createOscillator();
+
+        const gainNode =
+            ctx.createGain();
+
+        oscillator.type =
+            waveType || "sine";
+
+        oscillator.frequency.value =
+            frequency;
+
+        gainNode.gain.setValueAtTime(
+            0,
+            startTime
+        );
+
+        gainNode.gain.linearRampToValueAtTime(
+            volume,
+            startTime + 0.008
+        );
+
+        gainNode.gain.exponentialRampToValueAtTime(
+            0.0001,
+            startTime + duration
+        );
+
+        oscillator.connect(gainNode);
+
+        gainNode.connect(ctx.destination);
+
+        oscillator.start(startTime);
+
+        oscillator.stop(startTime + duration + 0.02);
+
+    } catch (error) {
+
+        console.error(
+            "사운드 재생에 실패했습니다.",
+            error
+        );
+
+    }
+
+}
+
+
+function playDrawSound() {
+
+    playTone(660, 0.07, "sine", 0.10, 0);
+
+}
+
+
+function playDiscardSound() {
+
+    playTone(280, 0.07, "triangle", 0.12, 0);
+
+}
+
+
+function playKanSound() {
+
+    playTone(392, 0.09, "triangle", 0.14, 0);
+    playTone(523, 0.12, "triangle", 0.14, 0.07);
+    playTone(659, 0.16, "triangle", 0.14, 0.14);
+
+}
+
+
+function playDoraRevealSound() {
+
+    playTone(880, 0.05, "sine", 0.08, 0);
+    playTone(1175, 0.12, "sine", 0.08, 0.05);
+
+}
+
+
+function playButtonClickSound() {
+
+    playTone(500, 0.045, "square", 0.05, 0);
+
+}
+
+
+/*
+    화료 점수 규모에 따라 팡파르 길이/음이 달라진다.
+    (역만은 가장 화려하게, 1판짜리는 짧고 산뜻하게)
+*/
+
+function playWinSound(isYakuman, yakumanCount) {
+
+    const baseNotes = isYakuman
+        ? [523, 659, 784, 1047, 1319, 1568]
+        : [523, 659, 784, 1047];
+
+    let notes = [...baseNotes];
+
+
+    /*
+        더블/트리플 역만이면 마지막 화음을
+        추가로 한 번씩 더 얹어서 더 화려하게 만든다.
+    */
+
+    const extraFlourishes =
+        Math.max(0, (yakumanCount || 0) - 1);
+
+    for (let i = 0; i < extraFlourishes; i++) {
+
+        notes = notes.concat([1568, 1976]);
+
+    }
+
+    notes.forEach((freq, index) => {
+
+        playTone(
+            freq,
+            0.22,
+            "triangle",
+            0.14,
+            index * 0.09
+        );
+
+    });
+
+}
+
+
+function playGameOverSound() {
+
+    playTone(392, 0.18, "sine", 0.12, 0);
+    playTone(330, 0.18, "sine", 0.12, 0.15);
+    playTone(262, 0.3, "sine", 0.12, 0.3);
+
+}
+
+
+function setSoundEnabled(enabled) {
+
+    soundEnabled = enabled;
+
+    try {
+
+        localStorage.setItem(
+            SOUND_STORAGE_KEY,
+            String(enabled)
+        );
+
+    } catch (error) {
+
+        console.error(
+            "소리 설정을 저장하지 못했습니다.",
+            error
+        );
+
+    }
+
+}
 
 
 /* =========================================================
@@ -764,6 +1022,15 @@ const handCountElement =
 const resultOverlayElement =
     document.getElementById("result-overlay");
 
+const resultBurstElement =
+    document.getElementById("result-burst");
+
+const resultConfettiElement =
+    document.getElementById("result-confetti");
+
+const resultTierBadgeElement =
+    document.getElementById("result-tier-badge");
+
 const resultTitleElement =
     document.getElementById("result-title");
 
@@ -823,6 +1090,9 @@ const startHistoryButton =
 
 const scoreHistoryButton =
     document.getElementById("score-history-button");
+
+const soundToggleButton =
+    document.getElementById("sound-toggle-button");
 
 const scoreHistoryOverlayElement =
     document.getElementById("score-history-overlay");
@@ -1406,6 +1676,8 @@ function drawTile() {
 
             isHaitei = (wall.length === 0);
 
+            playDrawSound();
+
             setStatus(
                 `${turnCount} / ${MAX_TURNS}번째 쯔모`
             );
@@ -1442,6 +1714,8 @@ function drawTile() {
         return;
 
     }
+
+    playDrawSound();
 
 
     turnCount++;
@@ -1513,6 +1787,8 @@ function choosePeekTile(index) {
     drawnTile = chosen;
 
     tsumoPeekTokensRemaining--;
+
+    playDrawSound();
 
 
     setStatus(
@@ -1591,6 +1867,8 @@ function retrieveFromDiscard(tile) {
     selectedTileIndex = null;
 
     drawnTileSelected = false;
+
+    playDrawSound();
 
 
     /*
@@ -1731,6 +2009,8 @@ function discardTile() {
             ];
 
     isDiscarding = true;
+
+    playDiscardSound();
 
     if (exitElement) {
 
@@ -2169,6 +2449,8 @@ function declareKan(kanTile) {
 
     kanCount++;
 
+    playKanSound();
+
 
     selectedTileIndex = null;
 
@@ -2282,6 +2564,7 @@ function revealKanDora() {
         nextDora
     );
 
+    playDoraRevealSound();
 
     renderDora();
 
@@ -2524,6 +2807,8 @@ function finalizeResult(yakuList) {
         return {
             yakuList,
             isYakuman: true,
+            isKazoeYakuman: false,
+            yakumanCount,
             score: 32000 * yakumanCount
         };
 
@@ -2543,6 +2828,26 @@ function finalizeResult(yakuList) {
     });
 
 
+    /*
+        헤아림 역만: 역만급 역이 하나도 없어도
+        일반 역만으로 판수가 13판 이상 쌓이면
+        역만 1개로 인정한다.
+    */
+
+    if (han >= 13) {
+
+        return {
+            yakuList,
+            isYakuman: true,
+            isKazoeYakuman: true,
+            yakumanCount: 1,
+            han,
+            score: 32000
+        };
+
+    }
+
+
     let score;
 
     if (han >= 5) {
@@ -2560,6 +2865,8 @@ function finalizeResult(yakuList) {
     return {
         yakuList,
         isYakuman: false,
+        isKazoeYakuman: false,
+        yakumanCount: 0,
         han,
         score
     };
@@ -4540,6 +4847,8 @@ function endGame(message) {
 
     removeKanChoices();
 
+    playGameOverSound();
+
 
     recordGameResult("gameover", message);
 
@@ -4560,7 +4869,153 @@ function endGame(message) {
    결과 오버레이
 ========================================================= */
 
-function showResult(title, message, isWin) {
+/*
+    화료 결과의 "등급"을 매긴다.
+
+    1: 일반 (1~4판)
+    2: 만관급 (5판 이상)
+    3: 역만 1개 (헤아림 역만 포함)
+    4: 더블역만 (역만 2개 동시 성립)
+    5: 트리플역만 이상 (역만 3개 이상)
+*/
+
+function getResultTier(winResult) {
+
+    if (!winResult) {
+
+        return 1;
+
+    }
+
+    if (winResult.isYakuman) {
+
+        const count =
+            winResult.yakumanCount || 1;
+
+        if (count >= 3) {
+
+            return 5;
+
+        }
+
+        if (count === 2) {
+
+            return 4;
+
+        }
+
+        return 3;
+
+    }
+
+    if (
+        typeof winResult.han === "number" &&
+        winResult.han >= 5
+    ) {
+
+        return 2;
+
+    }
+
+    return 1;
+
+}
+
+
+function getTierBadgeText(winResult, tier) {
+
+    if (tier === 5) {
+
+        return `트리플역만 이상!! (역만 ${winResult.yakumanCount}개)`;
+
+    }
+
+    if (tier === 4) {
+
+        return "더블역만!!";
+
+    }
+
+    if (tier === 3) {
+
+        return winResult.isKazoeYakuman
+            ? "헤아림 역만!!"
+            : "역만!!";
+
+    }
+
+    return "";
+
+}
+
+
+/*
+    화면 전체로 퍼지는 색종이 조각을 만든다.
+    (tier가 높을수록 개수도, 튀는 범위도 늘어난다)
+*/
+
+function spawnConfetti(count) {
+
+    resultConfettiElement.innerHTML =
+        "";
+
+    const colors =
+        ["#d4af37", "#e0483f", "#eef0ea", "#4a9d6f", "#3d7fbd"];
+
+    for (let i = 0; i < count; i++) {
+
+        const piece =
+            document.createElement("span");
+
+        piece.classList.add(
+            "confetti-piece"
+        );
+
+        const angle =
+            Math.random() * Math.PI * 2;
+
+        const distance =
+            120 + Math.random() * 180;
+
+        const dx =
+            Math.cos(angle) * distance;
+
+        const dy =
+            Math.sin(angle) * distance - 60;
+
+        piece.style.setProperty(
+            "--dx",
+            `${dx}px`
+        );
+
+        piece.style.setProperty(
+            "--dy",
+            `${dy}px`
+        );
+
+        piece.style.setProperty(
+            "--rot",
+            `${Math.random() * 720 - 360}deg`
+        );
+
+        piece.style.background =
+            colors[
+                Math.floor(Math.random() * colors.length)
+            ];
+
+        piece.style.animationDelay =
+            `${Math.random() * 0.15}s`;
+
+        resultConfettiElement.appendChild(
+            piece
+        );
+
+    }
+
+}
+
+
+function showResult(title, message, isWin, winResult) {
 
     resultTitleElement.textContent =
         title;
@@ -4580,6 +5035,81 @@ function showResult(title, message, isWin) {
 
     resultScoreElement.textContent =
         `최종 점수: ${score.toLocaleString()}점`;
+
+
+    const tier =
+        isWin ? getResultTier(winResult) : 1;
+
+    resultOverlayElement.classList.remove(
+        "result-tier-1",
+        "result-tier-2",
+        "result-tier-3",
+        "result-tier-4",
+        "result-tier-5"
+    );
+
+    resultOverlayElement.classList.add(
+        `result-tier-${tier}`
+    );
+
+    const modalElement =
+        resultOverlayElement.querySelector(
+            ".result-modal"
+        );
+
+    modalElement.classList.toggle(
+        "shake",
+        tier >= 4
+    );
+
+
+    /*
+        버스트 플래시는 클래스를 뗐다가
+        다시 붙여야 매번 애니메이션이 재생된다.
+    */
+
+    resultBurstElement.classList.remove(
+        "active"
+    );
+
+    void resultBurstElement.offsetWidth;
+
+    if (tier >= 3) {
+
+        resultBurstElement.classList.add(
+            "active"
+        );
+
+    }
+
+
+    if (tier >= 3) {
+
+        spawnConfetti(
+            tier === 3 ? 24 : (tier === 4 ? 40 : 60)
+        );
+
+    } else {
+
+        resultConfettiElement.innerHTML =
+            "";
+
+    }
+
+
+    const badgeText =
+        isWin
+            ? getTierBadgeText(winResult, tier)
+            : "";
+
+    resultTierBadgeElement.textContent =
+        badgeText;
+
+    resultTierBadgeElement.classList.toggle(
+        "hidden",
+        !badgeText
+    );
+
 
     if (gameMode === "stage") {
 
@@ -4838,6 +5368,8 @@ function buyShopItem(item) {
     coins -= item.cost;
 
     stageUpgrades[item.id] += 1;
+
+    playButtonClickSound();
 
     updateStageHud();
 
@@ -5613,6 +6145,8 @@ startGameButton.addEventListener(
     "click",
     () => {
 
+        playButtonClickSound();
+
         hideStartScreen();
 
         gameMode = "classic";
@@ -5628,6 +6162,8 @@ startGameButton.addEventListener(
 startStageModeButton.addEventListener(
     "click",
     () => {
+
+        playButtonClickSound();
 
         hideStartScreen();
 
@@ -5694,6 +6230,37 @@ scoreHistoryButton.addEventListener(
     "click",
     showScoreHistory
 );
+
+
+function updateSoundToggleLabel() {
+
+    soundToggleButton.textContent =
+        soundEnabled
+            ? "🔊 소리 끄기"
+            : "🔇 소리 켜기";
+
+}
+
+
+soundToggleButton.addEventListener(
+    "click",
+    () => {
+
+        setSoundEnabled(!soundEnabled);
+
+        updateSoundToggleLabel();
+
+        if (soundEnabled) {
+
+            playButtonClickSound();
+
+        }
+
+    }
+);
+
+
+updateSoundToggleLabel();
 
 
 closeScoreHistoryButton.addEventListener(
@@ -5819,6 +6386,8 @@ winButton.addEventListener(
 
         renderInfo();
 
+        playWinSound(winResult.isYakuman, winResult.yakumanCount);
+
 
         const yakuText =
             winResult.yakuList
@@ -5848,7 +6417,8 @@ winButton.addEventListener(
         showResult(
             "화료!",
             yakuText,
-            true
+            true,
+            winResult
         );
 
 
