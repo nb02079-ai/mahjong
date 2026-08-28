@@ -483,10 +483,15 @@ body {
     text-align: center;
 }
 
-.hand-section .discard-history-button {
+.hand-section .discard-history-button,
+.hand-section .mulligan-button {
     display: inline-block;
 
     margin-top: 10px;
+
+    margin-left: 6px;
+
+    margin-right: 6px;
 }
 
 .player-hand {
@@ -525,9 +530,30 @@ body {
     min-height: 80px;
 
     display: flex;
+    flex-direction: column;
 
     justify-content: center;
     align-items: center;
+
+    gap: 10px;
+}
+
+.peek-hint {
+    color: #d4af37;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+.peek-choices {
+    display: flex;
+
+    gap: 16px;
+}
+
+.tile.peek-choice {
+    cursor: pointer;
 }
 
 .tile.drawn {
@@ -617,7 +643,7 @@ body {
 ========================= */
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 
@@ -1110,6 +1136,43 @@ body {
     box-shadow: none;
 }
 
+.discard-retrieve-hint {
+    width: 100%;
+
+    margin-bottom: 6px;
+
+    padding: 8px 10px;
+
+    border: 1px solid #3d5747;
+
+    border-radius: 8px;
+
+    background: #1c3128;
+
+    color: #d4af37;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+.discard-tiles .tile.retrievable {
+    cursor: pointer;
+
+    border-color: #d4af37;
+
+    box-shadow:
+        0 0 0 1px rgba(212, 175, 55, 0.3);
+}
+
+.discard-tiles .tile.retrievable:hover {
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 0 0 1px rgba(212, 175, 55, 0.3),
+        0 7px 15px rgba(0, 0, 0, 0.3);
+}
+
 .discard-empty {
     color: #8ea892;
 
@@ -1488,5 +1551,186 @@ body {
 }
 
 .start-actions .action-button {
+    min-width: 200px;
+}
+
+
+/* =========================
+   SHOP OVERLAY
+   (스테이지 사이 상점 / 런 결과)
+========================= */
+
+.shop-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(6, 14, 10, 0.75);
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    padding: 20px;
+
+    z-index: 1100;
+}
+
+.shop-overlay.hidden {
+    display: none;
+}
+
+.shop-modal {
+    width: 100%;
+    max-width: 480px;
+    max-height: 86vh;
+
+    background: #16261f;
+
+    border: 1px solid #2f4b3c;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.5);
+
+    padding: 32px 34px;
+
+    text-align: center;
+
+    display: flex;
+    flex-direction: column;
+
+    animation: resultModalPop 0.3s ease;
+}
+
+.shop-modal h2 {
+    font-size: 22px;
+
+    letter-spacing: 1px;
+
+    color: #d4af37;
+}
+
+.shop-summary {
+    margin-top: 8px;
+
+    color: #c7d4c9;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+    white-space: pre-line;
+}
+
+.shop-items {
+    margin-top: 22px;
+
+    overflow-y: auto;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+.shop-item {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 12px 14px;
+
+    border: 1px solid #2f4b3c;
+
+    border-radius: 10px;
+
+    background: #1c3128;
+
+    text-align: left;
+}
+
+.shop-item-info {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.shop-item-name {
+    color: #efe9d8;
+
+    font-size: 13px;
+
+    font-weight: 700;
+}
+
+.shop-item-desc {
+    color: #b3c2b6;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+.shop-item-owned {
+    color: #8ea892;
+
+    font-size: 11px;
+}
+
+.shop-buy-button {
+    flex-shrink: 0;
+
+    min-width: 84px;
+
+    height: 40px;
+
+    padding: 0 12px;
+
+    border: 1px solid #3d5747;
+
+    border-radius: 8px;
+
+    background: #1f362b;
+
+    color: #d4af37;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.shop-buy-button:hover:not(:disabled) {
+    background: #2a4536;
+
+    border-color: #5c7d68;
+}
+
+.shop-buy-button:disabled {
+    color: #6f8a76;
+
+    cursor: not-allowed;
+
+    opacity: 0.6;
+}
+
+#shop-next-stage-button,
+#run-summary-restart-button {
+    margin-top: 24px;
+
+    align-self: center;
+
     min-width: 200px;
 }

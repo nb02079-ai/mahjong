@@ -33,6 +33,16 @@
 
             <div class="game-info">
 
+                <div id="stage-info-box" class="info-box hidden">
+                    <span class="info-label">STAGE</span>
+                    <span id="stage-value" class="info-value">1 / 5</span>
+                </div>
+
+                <div id="coins-info-box" class="info-box hidden">
+                    <span class="info-label">COINS</span>
+                    <span id="coins-value" class="info-value">0</span>
+                </div>
+
                 <div class="info-box">
                     <span class="info-label">SCORE</span>
                     <span id="score" class="info-value">0</span>
@@ -102,6 +112,10 @@
 
         <button id="discard-history-button" class="text-link-button discard-history-button">
             버림패 확인
+        </button>
+
+        <button id="mulligan-button" class="text-link-button mulligan-button hidden">
+            다시 뽑기
         </button>
 
             </section>
@@ -501,13 +515,18 @@
                 <p>· 정해진 턴 안에 역이 있는 손패를 완성하면 화료로 점수를 얻어요.</p>
                 <p>· ★ 와일드패는 어떤 패로도 대신 쓸 수 있고, 도라·적도라는 점수를 더 올려줘요.</p>
                 <p>· 같은 패 4장을 모으면 깡을 선언해 보너스 도라를 노릴 수 있어요.</p>
+                <p>· 스테이지 모드는 5판을 연달아 플레이하며, 판 사이에 번 코인으로 상점에서 아이템을 사요.</p>
 
             </div>
 
             <div class="start-actions">
 
                 <button id="start-game-button" class="action-button">
-                    게임 시작
+                    무한 모드 시작
+                </button>
+
+                <button id="start-stage-mode-button" class="action-button">
+                    스테이지 모드 시작
                 </button>
 
                 <button id="start-history-button" class="text-link-button">
@@ -515,6 +534,56 @@
                 </button>
 
             </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         SHOP OVERLAY
+         (스테이지 사이 상점)
+    ========================== -->
+
+    <div id="shop-overlay" class="shop-overlay hidden">
+
+        <div class="shop-modal">
+
+            <h2 id="shop-title">스테이지 1 클리어!</h2>
+
+            <p id="shop-summary" class="shop-summary"></p>
+
+            <div id="shop-items" class="shop-items">
+
+                <!-- JS가 아이템 카드를 채움 -->
+
+            </div>
+
+            <button id="shop-next-stage-button" class="action-button">
+                다음 스테이지로
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         RUN SUMMARY OVERLAY
+         (스테이지 모드 최종 결과)
+    ========================== -->
+
+    <div id="run-summary-overlay" class="shop-overlay hidden">
+
+        <div class="shop-modal">
+
+            <h2>스테이지 모드 클리어!</h2>
+
+            <p id="run-summary-detail" class="shop-summary"></p>
+
+            <button id="run-summary-restart-button" class="action-button">
+                처음으로
+            </button>
 
         </div>
 

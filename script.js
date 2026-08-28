@@ -8,9 +8,70 @@
    1. 게임 설정
 ========================================================= */
 
-const MAX_TURNS = 70;
+const BASE_MAX_TURNS = 70;
+
+let MAX_TURNS = BASE_MAX_TURNS;
+
 const WILD_COUNT = 2;
 const DEAD_WALL_SIZE = 5;
+
+/*
+    스테이지 모드 설정
+*/
+
+const TOTAL_STAGES = 5;
+
+const SHOP_ITEMS = [
+    {
+        id: "extraTurns",
+        name: "턴 수 증가권",
+        desc: "다음 스테이지 제한 턴 +10",
+        cost: 3,
+        maxPurchase: Infinity
+    },
+    {
+        id: "extraDoraReveal",
+        name: "시작 도라 추가 공개권",
+        desc: "다음 스테이지 시작 시 도라 표시패 1장 추가 공개",
+        cost: 4,
+        maxPurchase: 3
+    },
+    {
+        id: "multiplierPurchases",
+        name: "점수 배율 부적",
+        desc: "다음 스테이지 화료 점수 +50%",
+        cost: 5,
+        maxPurchase: 3
+    },
+    {
+        id: "discardTokens",
+        name: "버림패 회수권",
+        desc: "다음 스테이지에서 쯔모 대신 버림패 하나를 가져올 수 있음 (1회당 1장)",
+        cost: 3,
+        maxPurchase: Infinity
+    },
+    {
+        id: "extraRedFive",
+        name: "적도라 추가권",
+        desc: "다음 스테이지에 적도라 1장 추가 (수패 한 종류당 최대 2장까지)",
+        cost: 2,
+        maxPurchase: 3
+    },
+    {
+        id: "mulliganTokens",
+        name: "시작패 멀리건권",
+        desc: "다음 스테이지 시작 시, 첫 타패 전이라면 배패를 다시 뽑을 수 있음",
+        cost: 6,
+        maxPurchase: 3
+    },
+    {
+        id: "tsumoPeekPurchases",
+        name: "쯔모 투시권",
+        desc: "다음 스테이지에서 3번의 쯔모 동안 패산에서 2장을 보고 하나를 골라 가져올 수 있음 (1회 구매 = 3회 사용)",
+        cost: 7,
+        maxPurchase: 2
+    }
+];
 
 
 /* =========================================================
@@ -205,6 +266,49 @@ const TILE_EXIT_DURATION = 200;
 
 let isDiscarding = false;
 
+/*
+    스테이지 모드 상태
+
+    gameMode: "classic"(무한 모드) | "stage"(스테이지 모드)
+    stageUpgrades: 상점에서 산 아이템 개수.
+        전부 소모성이라 startGame()이 값을 읽고 나면 즉시 초기화된다.
+*/
+
+let gameMode = "classic";
+let currentStage = 1;
+let coins = 0;
+let lastStageCoinsEarned = 0;
+
+function createEmptyStageUpgrades() {
+
+    return {
+        extraTurns: 0,
+        extraDoraReveal: 0,
+        multiplierPurchases: 0,
+        discardTokens: 0,
+        extraRedFive: 0,
+        mulliganTokens: 0,
+        tsumoPeekPurchases: 0
+    };
+
+}
+
+let stageUpgrades = createEmptyStageUpgrades();
+
+let stageScoreMultiplier = 1;
+let discardRetrieveTokensRemaining = 0;
+let initialDoraRevealCount = 1;
+let extraRedFiveCount = 0;
+let mulliganTokensRemaining = 0;
+let tsumoPeekTokensRemaining = 0;
+
+/*
+    쯔모 투시권 사용 시, 선택 대기 중인 두 후보 패
+    (null이면 평소처럼 한 장만 뽑힌 상태)
+*/
+
+let peekCandidates = null;
+
 
 /*
     타이밍 역 판정용 플래그
@@ -283,6 +387,9 @@ const wildCountElement =
 const discardHistoryButton =
     document.getElementById("discard-history-button");
 
+const mulliganButton =
+    document.getElementById("mulligan-button");
+
 const discardHistoryOverlayElement =
     document.getElementById("discard-history-overlay");
 
@@ -327,6 +434,45 @@ const closeScoreHistoryButton =
 
 const clearScoreHistoryButton =
     document.getElementById("clear-score-history-button");
+
+const startStageModeButton =
+    document.getElementById("start-stage-mode-button");
+
+const stageInfoBoxElement =
+    document.getElementById("stage-info-box");
+
+const stageValueElement =
+    document.getElementById("stage-value");
+
+const coinsInfoBoxElement =
+    document.getElementById("coins-info-box");
+
+const coinsValueElement =
+    document.getElementById("coins-value");
+
+const shopOverlayElement =
+    document.getElementById("shop-overlay");
+
+const shopTitleElement =
+    document.getElementById("shop-title");
+
+const shopSummaryElement =
+    document.getElementById("shop-summary");
+
+const shopItemsElement =
+    document.getElementById("shop-items");
+
+const shopNextStageButton =
+    document.getElementById("shop-next-stage-button");
+
+const runSummaryOverlayElement =
+    document.getElementById("run-summary-overlay");
+
+const runSummaryDetailElement =
+    document.getElementById("run-summary-detail");
+
+const runSummaryRestartButton =
+    document.getElementById("run-summary-restart-button");
 
 
 /* =========================================================
@@ -375,6 +521,66 @@ function startGame() {
 
     isHaitei = false;
 
+
+    /*
+        스테이지 모드 업그레이드 적용
+
+        전부 "다음 스테이지 1회용" 소모성이므로
+        여기서 값을 읽어 반영한 뒤 즉시 초기화한다.
+    */
+
+    MAX_TURNS = BASE_MAX_TURNS;
+
+    initialDoraRevealCount = 1;
+
+    stageScoreMultiplier = 1;
+
+    discardRetrieveTokensRemaining = 0;
+
+    extraRedFiveCount = 0;
+
+    mulliganTokensRemaining = 0;
+
+    tsumoPeekTokensRemaining = 0;
+
+    peekCandidates = null;
+
+    if (gameMode === "stage") {
+
+        MAX_TURNS =
+            BASE_MAX_TURNS +
+            stageUpgrades.extraTurns * 10;
+
+        initialDoraRevealCount =
+            Math.min(
+                DEAD_WALL_SIZE,
+                1 + stageUpgrades.extraDoraReveal
+            );
+
+        stageScoreMultiplier =
+            1 + 0.5 * stageUpgrades.multiplierPurchases;
+
+        discardRetrieveTokensRemaining =
+            stageUpgrades.discardTokens;
+
+        extraRedFiveCount =
+            stageUpgrades.extraRedFive;
+
+        mulliganTokensRemaining =
+            stageUpgrades.mulliganTokens;
+
+        tsumoPeekTokensRemaining =
+            stageUpgrades.tsumoPeekPurchases * 3;
+
+
+        stageUpgrades =
+            createEmptyStageUpgrades();
+
+    }
+
+    updateStageHud();
+
+
     hideResult();
 
     discardButton.disabled = false;
@@ -415,21 +621,34 @@ function initializeTiles() {
 
     /*
         각 수패의 "5" 인덱스 (5만/5통/5삭)
-        이 중 4장 중 1장을 적도라로 표시한다.
+        기본으로 4장 중 1장을 적도라로 표시하고,
+        "적도라 추가권"을 산 만큼 수패 하나당
+        추가로 1장씩(최대 한 수패당 2장) 더 적도라로 표시한다.
+
+        RED_FIVE_INDEXES의 순서대로 하나씩 추가된다
+        (만 → 통 → 삭 순).
     */
 
     const RED_FIVE_INDEXES = [4, 13, 22];
 
     TILE_TYPES.forEach((tile, tileIndex) => {
 
+        const suitPosition =
+            RED_FIVE_INDEXES.indexOf(tileIndex);
+
         for (let i = 0; i < 4; i++) {
 
-            const isRedFiveSlot =
-                RED_FIVE_INDEXES.includes(tileIndex) &&
+            const isBaseRedFiveSlot =
+                suitPosition !== -1 &&
                 i === 0;
 
+            const isBonusRedFiveSlot =
+                suitPosition !== -1 &&
+                i === 1 &&
+                suitPosition < extraRedFiveCount;
+
             wall.push(
-                isRedFiveSlot
+                (isBaseRedFiveSlot || isBonusRedFiveSlot)
                     ? markRedFive(tile)
                     : tile
             );
@@ -552,9 +771,11 @@ function revealInitialDora() {
 
     }
 
-    doraIndicators = [
-        deadWall[0]
-    ];
+    doraIndicators =
+        deadWall.slice(
+            0,
+            initialDoraRevealCount
+        );
 
 }
 
@@ -707,11 +928,97 @@ function drawTile() {
     }
 
 
+    if (peekCandidates) {
+
+        return;
+
+    }
+
+
     if (turnCount >= MAX_TURNS) {
 
         endGame(
             `${MAX_TURNS}회의 쯔모 기회를 모두 사용했습니다.`
         );
+
+        return;
+
+    }
+
+
+    /*
+        쯔모 투시권이 남아있으면
+        2장을 뽑아서 선택하게 한다.
+    */
+
+    if (
+        gameMode === "stage" &&
+        tsumoPeekTokensRemaining > 0
+    ) {
+
+        const first =
+            drawFromWall();
+
+        if (!first) {
+
+            return;
+
+        }
+
+        /*
+            drawFromWall()을 다시 호출하면 패산이 비어있을 때
+            endGame()이 또 호출되어 버리므로,
+            여기서는 길이만 확인하고 직접 꺼낸다.
+        */
+
+        const second =
+            wall.length > 0
+                ? wall.pop()
+                : null;
+
+
+        turnCount++;
+
+        selectedTileIndex = null;
+
+        drawnTileSelected = false;
+
+        isRinshan = false;
+
+
+        if (!second) {
+
+            /*
+                패산에 딱 1장만 남아있던 경우
+                평범한 쯔모로 처리한다.
+            */
+
+            drawnTile = first;
+
+            isHaitei = (wall.length === 0);
+
+            setStatus(
+                `${turnCount} / ${MAX_TURNS}번째 쯔모`
+            );
+
+            renderAll();
+
+            checkActionsAfterDraw();
+
+            return;
+
+        }
+
+        isHaitei = (wall.length === 0);
+
+        peekCandidates = [first, second];
+
+        setStatus(
+            `${turnCount} / ${MAX_TURNS}번째 쯔모 - ` +
+            `투시: 둘 중 하나를 선택하세요.`
+        );
+
+        renderAll();
 
         return;
 
@@ -757,6 +1064,139 @@ function drawTile() {
     /*
         쯔모 후 액션 검사
     */
+
+    checkActionsAfterDraw();
+
+}
+
+
+/* =========================================================
+   쯔모 투시 - 둘 중 하나 선택
+========================================================= */
+
+function choosePeekTile(index) {
+
+    if (!peekCandidates) {
+
+        return;
+
+    }
+
+    if (gameEnded) {
+
+        return;
+
+    }
+
+
+    const chosen =
+        peekCandidates[index];
+
+    const other =
+        peekCandidates[1 - index];
+
+    wall.push(other);
+
+    shuffle(wall);
+
+    peekCandidates = null;
+
+    drawnTile = chosen;
+
+    tsumoPeekTokensRemaining--;
+
+
+    setStatus(
+        `쯔모 투시로 패를 선택했습니다. ` +
+        `(남은 사용 ${tsumoPeekTokensRemaining}회)`
+    );
+
+
+    renderAll();
+
+    checkActionsAfterDraw();
+
+}
+
+
+/* =========================================================
+   버림패 회수 (버림패 회수권 사용 - 쯔모를 대신함)
+========================================================= */
+
+function retrieveFromDiscard(tile) {
+
+    if (gameEnded) {
+
+        return;
+
+    }
+
+    if (drawnTile !== null) {
+
+        return;
+
+    }
+
+    if (discardRetrieveTokensRemaining <= 0) {
+
+        return;
+
+    }
+
+    if (turnCount >= MAX_TURNS) {
+
+        endGame(
+            `${MAX_TURNS}회의 쯔모 기회를 모두 사용했습니다.`
+        );
+
+        return;
+
+    }
+
+
+    const index =
+        discardedTiles.indexOf(tile);
+
+    if (index === -1) {
+
+        return;
+
+    }
+
+
+    discardedTiles.splice(index, 1);
+
+    discardRetrieveTokensRemaining--;
+
+
+    drawnTile = tile;
+
+    turnCount++;
+
+    selectedTileIndex = null;
+
+    drawnTileSelected = false;
+
+
+    /*
+        버림패 회수는 영상개화도, 해저로월도 아니다.
+    */
+
+    isRinshan = false;
+
+    isHaitei = false;
+
+
+    setStatus(
+        `버림패에서 ${tile}를 가져왔습니다. ` +
+        `(남은 회수권 ${discardRetrieveTokensRemaining}장)`
+    );
+
+
+    hideDiscardHistory();
+
+    renderAll();
+
 
     checkActionsAfterDraw();
 
@@ -3017,6 +3457,109 @@ function renderAll() {
 
     renderInfo();
 
+    updateMulliganButton();
+
+}
+
+
+/* =========================================================
+   시작패 멀리건
+========================================================= */
+
+function updateMulliganButton() {
+
+    const canMulligan =
+        gameMode === "stage" &&
+        mulliganTokensRemaining > 0 &&
+        isFirstTurn &&
+        kanMelds.length === 0 &&
+        !gameEnded;
+
+    mulliganButton.classList.toggle(
+        "hidden",
+        !canMulligan
+    );
+
+    if (canMulligan) {
+
+        mulliganButton.textContent =
+            `다시 뽑기 (${mulliganTokensRemaining})`;
+
+    }
+
+}
+
+
+function performMulligan() {
+
+    if (
+        gameMode !== "stage" ||
+        mulliganTokensRemaining <= 0 ||
+        !isFirstTurn ||
+        kanMelds.length > 0 ||
+        gameEnded
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+        현재 손패 + 쯔모패를 패산에 되돌리고
+        다시 섞은 뒤 새로 배패한다.
+    */
+
+    wall.push(...playerHand);
+
+    if (drawnTile !== null) {
+
+        wall.push(drawnTile);
+
+    }
+
+    if (peekCandidates) {
+
+        wall.push(...peekCandidates);
+
+        peekCandidates = null;
+
+    }
+
+    playerHand = [];
+
+    drawnTile = null;
+
+    selectedTileIndex = null;
+
+    drawnTileSelected = false;
+
+    shuffle(wall);
+
+    drawInitialHand();
+
+    mulliganTokensRemaining--;
+
+    turnCount = 0;
+
+    isRinshan = false;
+
+    isHaitei = false;
+
+
+    renderAll();
+
+    setStatus(
+        `손패를 다시 뽑았습니다. (남은 멀리건 ${mulliganTokensRemaining}회)`
+    );
+
+
+    setTimeout(() => {
+
+        drawTile();
+
+    }, 300);
+
 }
 
 
@@ -3124,6 +3667,84 @@ function renderHand() {
 function renderDrawnTile() {
 
     drawnTileElement.innerHTML = "";
+
+
+    if (peekCandidates) {
+
+        const hint =
+            document.createElement("div");
+
+        hint.classList.add(
+            "peek-hint"
+        );
+
+        hint.textContent =
+            "투시: 하나를 선택하세요";
+
+        drawnTileElement.appendChild(
+            hint
+        );
+
+
+        const choicesWrapper =
+            document.createElement("div");
+
+        choicesWrapper.classList.add(
+            "peek-choices"
+        );
+
+        peekCandidates.forEach((candidate, index) => {
+
+            const tile =
+                document.createElement("div");
+
+            tile.classList.add(
+                "tile",
+                "drawn",
+                "tile-pop-in",
+                "peek-choice"
+            );
+
+            const suitClass =
+                getSuitClass(candidate);
+
+            if (suitClass) {
+
+                tile.classList.add(
+                    suitClass
+                );
+
+            }
+
+            if (isRedFive(candidate)) {
+
+                tile.classList.add(
+                    "tile-red-five"
+                );
+
+            }
+
+            tile.innerHTML =
+                `<span>${candidate}</span>`;
+
+            tile.addEventListener(
+                "click",
+                () => choosePeekTile(index)
+            );
+
+            choicesWrapper.appendChild(
+                tile
+            );
+
+        });
+
+        drawnTileElement.appendChild(
+            choicesWrapper
+        );
+
+        return;
+
+    }
 
 
     if (!drawnTile) {
@@ -3490,6 +4111,20 @@ function showResult(title, message, isWin) {
     resultScoreElement.textContent =
         `최종 점수: ${score.toLocaleString()}점`;
 
+    if (gameMode === "stage") {
+
+        restartButton.textContent =
+            currentStage >= TOTAL_STAGES
+                ? "결과 확인"
+                : "상점으로";
+
+    } else {
+
+        restartButton.textContent =
+            "다시 시작";
+
+    }
+
     resultOverlayElement.classList.remove(
         "hidden"
     );
@@ -3500,6 +4135,254 @@ function showResult(title, message, isWin) {
 function hideResult() {
 
     resultOverlayElement.classList.add(
+        "hidden"
+    );
+
+}
+
+
+/* =========================================================
+   스테이지 모드 HUD
+========================================================= */
+
+function updateStageHud() {
+
+    const isStageMode =
+        gameMode === "stage";
+
+    stageInfoBoxElement.classList.toggle(
+        "hidden",
+        !isStageMode
+    );
+
+    coinsInfoBoxElement.classList.toggle(
+        "hidden",
+        !isStageMode
+    );
+
+    if (isStageMode) {
+
+        stageValueElement.textContent =
+            `${currentStage} / ${TOTAL_STAGES}`;
+
+        coinsValueElement.textContent =
+            coins;
+
+    }
+
+}
+
+
+/* =========================================================
+   스테이지 진행 (화료/게임종료 이후)
+========================================================= */
+
+function advanceStageFlow() {
+
+    lastStageCoinsEarned =
+        Math.floor(score / 1000);
+
+    coins += lastStageCoinsEarned;
+
+    updateStageHud();
+
+    if (currentStage >= TOTAL_STAGES) {
+
+        showRunSummary();
+
+    } else {
+
+        showShop();
+
+    }
+
+}
+
+
+/* =========================================================
+   상점
+========================================================= */
+
+function getShopSummaryText() {
+
+    return (
+        `이번 스테이지 점수 ${score.toLocaleString()}점 ` +
+        `→ 코인 +${lastStageCoinsEarned}\n` +
+        `보유 코인: ${coins}`
+    );
+
+}
+
+
+function showShop() {
+
+    shopTitleElement.textContent =
+        `스테이지 ${currentStage} 클리어!`;
+
+    shopSummaryElement.textContent =
+        getShopSummaryText();
+
+    renderShopItems();
+
+    shopOverlayElement.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+function hideShop() {
+
+    shopOverlayElement.classList.add(
+        "hidden"
+    );
+
+}
+
+
+function renderShopItems() {
+
+    shopItemsElement.innerHTML = "";
+
+    SHOP_ITEMS.forEach(item => {
+
+        const owned =
+            stageUpgrades[item.id];
+
+        const card =
+            document.createElement("div");
+
+        card.classList.add("shop-item");
+
+
+        const info =
+            document.createElement("div");
+
+        info.classList.add("shop-item-info");
+
+
+        const nameEl =
+            document.createElement("div");
+
+        nameEl.classList.add("shop-item-name");
+
+        nameEl.textContent = item.name;
+
+
+        const descEl =
+            document.createElement("div");
+
+        descEl.classList.add("shop-item-desc");
+
+        descEl.textContent = item.desc;
+
+
+        info.appendChild(nameEl);
+
+        info.appendChild(descEl);
+
+
+        if (owned > 0) {
+
+            const ownedEl =
+                document.createElement("div");
+
+            ownedEl.classList.add(
+                "shop-item-owned"
+            );
+
+            ownedEl.textContent =
+                `이번에 구매: ${owned}개`;
+
+            info.appendChild(ownedEl);
+
+        }
+
+
+        const buyButton =
+            document.createElement("button");
+
+        buyButton.classList.add(
+            "shop-buy-button"
+        );
+
+        buyButton.textContent =
+            `${item.cost} 코인`;
+
+        const atCap =
+            owned >= item.maxPurchase;
+
+        buyButton.disabled =
+            coins < item.cost || atCap;
+
+        buyButton.addEventListener(
+            "click",
+            () => buyShopItem(item)
+        );
+
+
+        card.appendChild(info);
+
+        card.appendChild(buyButton);
+
+        shopItemsElement.appendChild(card);
+
+    });
+
+}
+
+
+function buyShopItem(item) {
+
+    if (coins < item.cost) {
+
+        return;
+
+    }
+
+    if (
+        stageUpgrades[item.id] >=
+        item.maxPurchase
+    ) {
+
+        return;
+
+    }
+
+    coins -= item.cost;
+
+    stageUpgrades[item.id] += 1;
+
+    updateStageHud();
+
+    shopSummaryElement.textContent =
+        getShopSummaryText();
+
+    renderShopItems();
+
+}
+
+
+/* =========================================================
+   런 결과 (5스테이지 종료)
+========================================================= */
+
+function showRunSummary() {
+
+    runSummaryDetailElement.textContent =
+        `${TOTAL_STAGES}스테이지를 모두 마쳤어요!\n` +
+        `최종 코인: ${coins}`;
+
+    runSummaryOverlayElement.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+function hideRunSummary() {
+
+    runSummaryOverlayElement.classList.add(
         "hidden"
     );
 
@@ -3519,6 +4402,24 @@ function renderDiscardHistory() {
         discardedTiles.length;
 
 
+    /*
+        버림패 회수권이 남아있고,
+        지금 쯔모를 대신할 수 있는 타이밍이면
+        버림패를 클릭해서 가져올 수 있게 한다.
+    */
+
+    const canRetrieve =
+        gameMode === "stage" &&
+        discardRetrieveTokensRemaining > 0 &&
+        drawnTile === null &&
+        !gameEnded;
+
+    discardHistoryTilesElement.classList.toggle(
+        "retrieve-mode",
+        canRetrieve
+    );
+
+
     if (discardedTiles.length === 0) {
 
         const emptyMessage =
@@ -3536,6 +4437,26 @@ function renderDiscardHistory() {
         );
 
         return;
+
+    }
+
+
+    if (canRetrieve) {
+
+        const hint =
+            document.createElement("div");
+
+        hint.classList.add(
+            "discard-retrieve-hint"
+        );
+
+        hint.textContent =
+            `버림패를 클릭하면 쯔모 대신 가져올 수 있어요. ` +
+            `(남은 회수권 ${discardRetrieveTokensRemaining}장)`;
+
+        discardHistoryTilesElement.appendChild(
+            hint
+        );
 
     }
 
@@ -3578,6 +4499,20 @@ function renderDiscardHistory() {
 
         tileElement.innerHTML =
             `<span>${tile}</span>`;
+
+
+        if (canRetrieve) {
+
+            tileElement.classList.add(
+                "retrievable"
+            );
+
+            tileElement.addEventListener(
+                "click",
+                () => retrieveFromDiscard(tile)
+            );
+
+        }
 
         discardHistoryTilesElement.appendChild(
             tileElement
@@ -4038,7 +4973,15 @@ restartButton.addEventListener(
 
         hideResult();
 
-        startGame();
+        if (gameMode === "stage") {
+
+            advanceStageFlow();
+
+        } else {
+
+            startGame();
+
+        }
 
     }
 );
@@ -4047,6 +4990,12 @@ restartButton.addEventListener(
 discardHistoryButton.addEventListener(
     "click",
     showDiscardHistory
+);
+
+
+mulliganButton.addEventListener(
+    "click",
+    performMulligan
 );
 
 
@@ -4074,7 +5023,66 @@ startGameButton.addEventListener(
 
         hideStartScreen();
 
+        gameMode = "classic";
+
+        updateStageHud();
+
         startGame();
+
+    }
+);
+
+
+startStageModeButton.addEventListener(
+    "click",
+    () => {
+
+        hideStartScreen();
+
+        gameMode = "stage";
+
+        currentStage = 1;
+
+        coins = 0;
+
+        stageUpgrades =
+            createEmptyStageUpgrades();
+
+        updateStageHud();
+
+        startGame();
+
+    }
+);
+
+
+shopNextStageButton.addEventListener(
+    "click",
+    () => {
+
+        hideShop();
+
+        currentStage += 1;
+
+        startGame();
+
+    }
+);
+
+
+runSummaryRestartButton.addEventListener(
+    "click",
+    () => {
+
+        hideRunSummary();
+
+        gameMode = "classic";
+
+        updateStageHud();
+
+        startScreenOverlayElement.classList.remove(
+            "hidden"
+        );
 
     }
 );
@@ -4206,7 +5214,12 @@ winButton.addEventListener(
         );
 
 
-        score += winResult.score;
+        const finalWinScore =
+            Math.round(
+                winResult.score * stageScoreMultiplier
+            );
+
+        score += finalWinScore;
 
         renderInfo();
 
@@ -4221,7 +5234,12 @@ winButton.addEventListener(
                 .join(", ");
 
         setStatus(
-            `화료! ${yakuText} → +${winResult.score.toLocaleString()}점`
+            `화료! ${yakuText} → +${finalWinScore.toLocaleString()}점` +
+            (
+                stageScoreMultiplier > 1
+                    ? ` (배율 x${stageScoreMultiplier})`
+                    : ""
+            )
         );
 
 
