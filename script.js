@@ -414,7 +414,7 @@ function buildTileSVG(tile) {
 
         return (
             `<svg viewBox="${TILE_SVG_VIEWBOX}" ` +
-            `xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">` +
+            `xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none">` +
             buildTileChrome("", "") +
             `<path d="M30 16 L36 33 L54 33 L39 44 L45 61 ` +
             `L30 50 L15 61 L21 44 L6 33 L24 33 Z" ` +
@@ -566,7 +566,7 @@ function buildTileSVG(tile) {
 
     return (
         `<svg viewBox="${TILE_SVG_VIEWBOX}" ` +
-        `xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">` +
+        `xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none">` +
         inner +
         `</svg>`
     );
@@ -689,6 +689,15 @@ let mulliganTokensRemaining = 0;
 let tsumoPeekTokensRemaining = 0;
 
 /*
+    버림패 회수권/쯔모 투시권은 사서 가지고 있다고
+    자동으로 발동되지 않고, 전용 버튼을 눌러
+    "활성화"해야 그 순간부터 실제로 쓸 수 있다.
+*/
+
+let discardRetrieveArmed = false;
+let tsumoPeekArmed = false;
+
+/*
     쯔모 투시권 사용 시, 선택 대기 중인 두 후보 패
     (null이면 평소처럼 한 장만 뽑힌 상태)
 */
@@ -775,6 +784,12 @@ const discardHistoryButton =
 
 const mulliganButton =
     document.getElementById("mulligan-button");
+
+const discardRetrieveArmButton =
+    document.getElementById("discard-retrieve-arm-button");
+
+const tsumoPeekArmButton =
+    document.getElementById("tsumo-peek-arm-button");
 
 const discardHistoryOverlayElement =
     document.getElementById("discard-history-overlay");
@@ -931,6 +946,10 @@ function startGame() {
     mulliganTokensRemaining = 0;
 
     tsumoPeekTokensRemaining = 0;
+
+    discardRetrieveArmed = false;
+
+    tsumoPeekArmed = false;
 
     peekCandidates = null;
 
@@ -1336,12 +1355,13 @@ function drawTile() {
 
 
     /*
-        쯔모 투시권이 남아있으면
+        쯔모 투시권을 활성화해뒀고 남은 횟수가 있으면
         2장을 뽑아서 선택하게 한다.
     */
 
     if (
         gameMode === "stage" &&
+        tsumoPeekArmed &&
         tsumoPeekTokensRemaining > 0
     ) {
 
@@ -1527,6 +1547,12 @@ function retrieveFromDiscard(tile) {
     }
 
     if (discardRetrieveTokensRemaining <= 0) {
+
+        return;
+
+    }
+
+    if (!discardRetrieveArmed) {
 
         return;
 
@@ -3848,6 +3874,8 @@ function renderAll() {
 
     updateMulliganButton();
 
+    updateArmButtons();
+
 }
 
 
@@ -3873,6 +3901,52 @@ function updateMulliganButton() {
 
         mulliganButton.textContent =
             `다시 뽑기 (${mulliganTokensRemaining})`;
+
+    }
+
+}
+
+
+/* =========================================================
+   버림패 회수권 / 쯔모 투시권 활성화 버튼
+========================================================= */
+
+function updateArmButtons() {
+
+    const canArmRetrieve =
+        gameMode === "stage" &&
+        !gameEnded &&
+        discardRetrieveTokensRemaining > 0 &&
+        !discardRetrieveArmed;
+
+    discardRetrieveArmButton.classList.toggle(
+        "hidden",
+        !canArmRetrieve
+    );
+
+    if (canArmRetrieve) {
+
+        discardRetrieveArmButton.textContent =
+            `버림패 회수권 사용하기 (${discardRetrieveTokensRemaining})`;
+
+    }
+
+
+    const canArmPeek =
+        gameMode === "stage" &&
+        !gameEnded &&
+        tsumoPeekTokensRemaining > 0 &&
+        !tsumoPeekArmed;
+
+    tsumoPeekArmButton.classList.toggle(
+        "hidden",
+        !canArmPeek
+    );
+
+    if (canArmPeek) {
+
+        tsumoPeekArmButton.textContent =
+            `쯔모 투시 사용하기 (${tsumoPeekTokensRemaining})`;
 
     }
 
@@ -4833,13 +4907,14 @@ function renderDiscardHistory() {
 
 
     /*
-        버림패 회수권이 남아있고,
+        버림패 회수권을 활성화해뒀고 남은 횟수가 있고,
         지금 쯔모를 대신할 수 있는 타이밍이면
         버림패를 클릭해서 가져올 수 있게 한다.
     */
 
     const canRetrieve =
         gameMode === "stage" &&
+        discardRetrieveArmed &&
         discardRetrieveTokensRemaining > 0 &&
         drawnTile === null &&
         !gameEnded;
@@ -5479,6 +5554,40 @@ discardHistoryButton.addEventListener(
 mulliganButton.addEventListener(
     "click",
     performMulligan
+);
+
+
+discardRetrieveArmButton.addEventListener(
+    "click",
+    () => {
+
+        discardRetrieveArmed = true;
+
+        setStatus(
+            "버림패 회수권을 활성화했습니다. " +
+            "이제 쯔모 대신 버림패에서 패를 가져올 수 있어요."
+        );
+
+        renderAll();
+
+    }
+);
+
+
+tsumoPeekArmButton.addEventListener(
+    "click",
+    () => {
+
+        tsumoPeekArmed = true;
+
+        setStatus(
+            "쯔모 투시를 활성화했습니다. " +
+            "다음 쯔모부터 패산에서 2장을 보고 고를 수 있어요."
+        );
+
+        renderAll();
+
+    }
 );
 
 
