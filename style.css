@@ -110,13 +110,15 @@ body {
 ========================= */
 
 .text-link-button {
-    padding: 0;
+    padding: 7px 16px;
 
-    border: none;
+    border: 1px solid #555a61;
 
-    background: none;
+    border-radius: 8px;
 
-    color: #8d9298;
+    background: #2b2e33;
+
+    color: #d9dadd;
 
     font-size: 12px;
 
@@ -124,17 +126,24 @@ body {
 
     letter-spacing: 0.5px;
 
-    text-decoration: underline;
-
-    text-underline-offset: 3px;
-
     cursor: pointer;
 
-    transition: color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.15s ease;
 }
 
 .text-link-button:hover {
-    color: #d9dadd;
+    background: #3a3f45;
+
+    border-color: #8d9298;
+
+    transform: translateY(-1px);
+}
+
+.text-link-button:active {
+    transform: translateY(0);
 }
 
 
@@ -446,7 +455,7 @@ body {
 .hand-section .discard-history-button {
     display: inline-block;
 
-    margin-top: 4px;
+    margin-top: 10px;
 }
 
 .player-hand {
