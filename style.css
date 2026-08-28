@@ -575,6 +575,10 @@ body {
     width: 100%;
 }
 
+#manual-draw-button {
+    margin-top: 10px;
+}
+
 .drawn-tile-container {
     min-height: 80px;
 

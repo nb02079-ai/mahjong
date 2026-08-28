@@ -992,6 +992,9 @@ const drawnTileElement =
 const discardButton =
     document.getElementById("discard-button");
 
+const manualDrawButton =
+    document.getElementById("manual-draw-button");
+
 const kanButton =
     document.getElementById("kan-button");
 
@@ -2140,6 +2143,20 @@ function performDiscard() {
         endGame(
             `${MAX_TURNS}회의 쯔모 기회를 모두 사용했습니다.`
         );
+
+        return;
+
+    }
+
+
+    if (shouldPauseForDiscardRetrieve()) {
+
+        setStatus(
+            "버림패에서 가져오거나, " +
+            "\"쯔모하기\" 버튼을 눌러 진행하세요."
+        );
+
+        renderAll();
 
         return;
 
@@ -4218,6 +4235,27 @@ function updateMulliganButton() {
    버림패 회수권 / 쯔모 투시권 활성화 버튼
 ========================================================= */
 
+/*
+    버림패 회수권이 활성화된 채로 남아있으면
+    자동 쯔모를 잠깐 멈추고 플레이어의 선택(회수 또는
+    "쯔모하기" 버튼)을 기다린다.
+
+    (활성화만 해두고 자동 쯔모가 그대로 진행돼버리면
+     버림패를 클릭할 틈도 없이 다음 패가 뽑혀버리는
+     문제가 있었다)
+*/
+
+function shouldPauseForDiscardRetrieve() {
+
+    return (
+        gameMode === "stage" &&
+        discardRetrieveArmed &&
+        discardRetrieveTokensRemaining > 0
+    );
+
+}
+
+
 function updateArmButtons() {
 
     const canArmRetrieve =
@@ -4256,6 +4294,23 @@ function updateArmButtons() {
             `쯔모 투시 사용하기 (${tsumoPeekTokensRemaining})`;
 
     }
+
+
+    /*
+        회수권이 활성화되어 자동 쯔모가 멈춘 상태라면
+        "쯔모하기" 버튼으로 직접 진행할 수 있게 한다.
+    */
+
+    const showManualDraw =
+        drawnTile === null &&
+        peekCandidates === null &&
+        !gameEnded &&
+        shouldPauseForDiscardRetrieve();
+
+    manualDrawButton.classList.toggle(
+        "hidden",
+        !showManualDraw
+    );
 
 }
 
@@ -4318,6 +4373,19 @@ function performMulligan() {
 
 
     renderAll();
+
+    if (shouldPauseForDiscardRetrieve()) {
+
+        setStatus(
+            `손패를 다시 뽑았습니다. (남은 멀리건 ${mulliganTokensRemaining}회) ` +
+            `버림패에서 가져오거나 "쯔모하기"를 눌러 진행하세요.`
+        );
+
+        renderAll();
+
+        return;
+
+    }
 
     setStatus(
         `손패를 다시 뽑았습니다. (남은 멀리건 ${mulliganTokensRemaining}회)`
@@ -6103,6 +6171,12 @@ discardRetrieveArmButton.addEventListener(
         renderAll();
 
     }
+);
+
+
+manualDrawButton.addEventListener(
+    "click",
+    drawTile
 );
 
 
