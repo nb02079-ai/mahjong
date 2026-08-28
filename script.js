@@ -191,6 +191,20 @@ let lastDoraRenderCount = 0;
 let lastKanMeldRenderCount = 0;
 let lastRenderedScore = 0;
 
+/*
+    타패 퇴장 애니메이션 재생 시간(ms)
+    style.css의 tileExitOut 애니메이션 길이와 맞춰야 한다.
+*/
+
+const TILE_EXIT_DURATION = 200;
+
+/*
+    타패 애니메이션이 재생되는 동안
+    다른 패 선택/중복 타패를 막기 위한 플래그
+*/
+
+let isDiscarding = false;
+
 
 /*
     타이밍 역 판정용 플래그
@@ -322,6 +336,8 @@ function startGame() {
     lastKanMeldRenderCount = 0;
 
     lastRenderedScore = 0;
+
+    isDiscarding = false;
 
     doraIndicators = [];
 
@@ -735,6 +751,12 @@ function selectTile(index) {
 
     }
 
+    if (isDiscarding) {
+
+        return;
+
+    }
+
     drawnTileSelected = false;
 
     selectedTileIndex = index;
@@ -751,6 +773,12 @@ function selectTile(index) {
 function selectDrawnTile() {
 
     if (gameEnded) {
+
+        return;
+
+    }
+
+    if (isDiscarding) {
 
         return;
 
@@ -787,6 +815,12 @@ function discardTile() {
 
     }
 
+    if (isDiscarding) {
+
+        return;
+
+    }
+
 
     if (drawnTile === null) {
 
@@ -798,6 +832,52 @@ function discardTile() {
 
     }
 
+
+    /*
+        실제 상태 변경 전에,
+        지금 화면에 보이는 "버려질 패"의
+        DOM 엘리먼트를 먼저 찾아서
+        퇴장 애니메이션을 재생한다.
+    */
+
+    const isDiscardingDrawnTile =
+        drawnTileSelected ||
+        selectedTileIndex === null;
+
+    const exitElement =
+        isDiscardingDrawnTile
+            ? drawnTileElement.firstElementChild
+            : playerHandElement.children[
+                selectedTileIndex
+            ];
+
+    isDiscarding = true;
+
+    if (exitElement) {
+
+        exitElement.classList.add(
+            "tile-exit"
+        );
+
+    }
+
+
+    setTimeout(() => {
+
+        performDiscard();
+
+        isDiscarding = false;
+
+    }, TILE_EXIT_DURATION);
+
+}
+
+
+/* =========================================================
+   타패 (실제 상태 변경)
+========================================================= */
+
+function performDiscard() {
 
     let discardedTile;
 

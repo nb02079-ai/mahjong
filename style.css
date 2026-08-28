@@ -408,6 +408,37 @@ body {
     animation: tilePopIn 0.25s ease;
 }
 
+
+/* =========================
+   TILE EXIT ANIMATION
+   (타패로 버려지는 패)
+
+   재생 시간(0.2s)은 script.js의
+   TILE_EXIT_DURATION(200ms)과 맞춰야 한다.
+========================= */
+
+@keyframes tileExitOut {
+
+    from {
+        opacity: 1;
+
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+
+        transform: translateY(14px) scale(0.8);
+    }
+
+}
+
+.tile-exit {
+    animation: tileExitOut 0.2s ease forwards;
+
+    pointer-events: none;
+}
+
 .tile.selected {
     transform: translateY(-12px);
 
