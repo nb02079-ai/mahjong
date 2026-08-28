@@ -153,6 +153,9 @@ const resultScoreElement =
 const restartButton =
     document.getElementById("restart-button");
 
+const wildCountElement =
+    document.getElementById("wild-count");
+
 
 /* =========================================================
    5. 게임 시작
@@ -2898,6 +2901,60 @@ function renderInfo() {
 
     wallCountElement.textContent =
         wall.length;
+
+
+    renderWildCount();
+
+}
+
+
+/* =========================================================
+   WILD 카운터 렌더링
+
+   패산에 남은 ★ 개수만큼 밝게,
+   이미 빠져나간(뽑혔거나 손패/버림패로 간) ★는
+   흐리게 표시한다.
+========================================================= */
+
+function renderWildCount() {
+
+    wildCountElement.innerHTML = "";
+
+    const remainingInWall =
+        wall.filter(
+            tile => tile === "★"
+        ).length;
+
+    for (
+        let i = 0;
+        i < WILD_COUNT;
+        i++
+    ) {
+
+        const wildElement =
+            document.createElement(
+                "span"
+            );
+
+        wildElement.classList.add(
+            "wild-card"
+        );
+
+        if (i >= remainingInWall) {
+
+            wildElement.classList.add(
+                "used"
+            );
+
+        }
+
+        wildElement.textContent = "★";
+
+        wildCountElement.appendChild(
+            wildElement
+        );
+
+    }
 
 }
 
