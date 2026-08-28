@@ -25,6 +25,9 @@
                     <button id="yaku-guide-button" class="text-link-button">
                         역 목록
                     </button>
+                    <button id="score-history-button" class="text-link-button">
+                        점수 기록
+                    </button>
                 </div>
             </div>
 
@@ -439,6 +442,79 @@
             <button id="restart-button" class="action-button restart-button">
                 다시 시작
             </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         SCORE HISTORY OVERLAY
+         (점수 기록)
+    ========================== -->
+
+    <div id="score-history-overlay" class="score-history-overlay hidden">
+
+        <div class="score-history-modal">
+
+            <div class="score-history-header">
+
+                <span>점수 기록</span>
+
+                <button id="close-score-history" class="close-button">
+                    ✕
+                </button>
+
+            </div>
+
+            <div id="score-history-list" class="score-history-list">
+
+                <!-- JS가 기록을 채움 -->
+
+            </div>
+
+            <button id="clear-score-history-button" class="text-link-button clear-history-button">
+                기록 전체 지우기
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         START SCREEN OVERLAY
+         (게임 시작 전 첫 화면)
+    ========================== -->
+
+    <div id="start-screen-overlay" class="start-overlay">
+
+        <div class="start-modal">
+
+            <h1>SOLO MAHJONG</h1>
+
+            <p class="start-subtitle">1인용 마작 퍼즐</p>
+
+            <div class="start-rules">
+
+                <p>· 13장으로 시작해서 매 턴 한 장씩 뽑고 버리며 손패를 완성해요.</p>
+                <p>· 정해진 턴 안에 역이 있는 손패를 완성하면 화료로 점수를 얻어요.</p>
+                <p>· ★ 와일드패는 어떤 패로도 대신 쓸 수 있고, 도라·적도라는 점수를 더 올려줘요.</p>
+                <p>· 같은 패 4장을 모으면 깡을 선언해 보너스 도라를 노릴 수 있어요.</p>
+
+            </div>
+
+            <div class="start-actions">
+
+                <button id="start-game-button" class="action-button">
+                    게임 시작
+                </button>
+
+                <button id="start-history-button" class="text-link-button">
+                    점수 기록 보기
+                </button>
+
+            </div>
 
         </div>
 

@@ -304,6 +304,30 @@ const yakuGuideOverlayElement =
 const closeYakuGuideButton =
     document.getElementById("close-yaku-guide");
 
+const startScreenOverlayElement =
+    document.getElementById("start-screen-overlay");
+
+const startGameButton =
+    document.getElementById("start-game-button");
+
+const startHistoryButton =
+    document.getElementById("start-history-button");
+
+const scoreHistoryButton =
+    document.getElementById("score-history-button");
+
+const scoreHistoryOverlayElement =
+    document.getElementById("score-history-overlay");
+
+const scoreHistoryListElement =
+    document.getElementById("score-history-list");
+
+const closeScoreHistoryButton =
+    document.getElementById("close-score-history");
+
+const clearScoreHistoryButton =
+    document.getElementById("clear-score-history-button");
+
 
 /* =========================================================
    5. 게임 시작
@@ -3429,6 +3453,9 @@ function endGame(message) {
     removeKanChoices();
 
 
+    recordGameResult("gameover", message);
+
+
     showResult(
         "게임 종료",
         message,
@@ -3597,6 +3624,261 @@ function showYakuGuide() {
 function hideYakuGuide() {
 
     yakuGuideOverlayElement.classList.add(
+        "hidden"
+    );
+
+}
+
+
+/* =========================================================
+   시작 화면
+========================================================= */
+
+function hideStartScreen() {
+
+    startScreenOverlayElement.classList.add(
+        "hidden"
+    );
+
+}
+
+
+/* =========================================================
+   점수 기록 (localStorage에 저장)
+========================================================= */
+
+const SCORE_HISTORY_STORAGE_KEY =
+    "soloMahjongScoreHistory";
+
+const MAX_SCORE_HISTORY_ENTRIES = 50;
+
+function loadScoreHistory() {
+
+    try {
+
+        const raw =
+            localStorage.getItem(
+                SCORE_HISTORY_STORAGE_KEY
+            );
+
+        const parsed =
+            raw ? JSON.parse(raw) : [];
+
+        return Array.isArray(parsed)
+            ? parsed
+            : [];
+
+    } catch (error) {
+
+        console.error(
+            "점수 기록을 불러오지 못했습니다.",
+            error
+        );
+
+        return [];
+
+    }
+
+}
+
+
+function saveScoreHistoryEntry(entry) {
+
+    try {
+
+        const history =
+            loadScoreHistory();
+
+        history.unshift(entry);
+
+        if (
+            history.length >
+            MAX_SCORE_HISTORY_ENTRIES
+        ) {
+
+            history.length =
+                MAX_SCORE_HISTORY_ENTRIES;
+
+        }
+
+        localStorage.setItem(
+            SCORE_HISTORY_STORAGE_KEY,
+            JSON.stringify(history)
+        );
+
+    } catch (error) {
+
+        console.error(
+            "점수 기록을 저장하지 못했습니다.",
+            error
+        );
+
+    }
+
+}
+
+
+function recordGameResult(result, detail) {
+
+    saveScoreHistoryEntry({
+        date: new Date().toISOString(),
+        score,
+        result,
+        detail: detail || ""
+    });
+
+}
+
+
+function formatHistoryDate(isoString) {
+
+    const date =
+        new Date(isoString);
+
+    if (
+        isNaN(date.getTime())
+    ) {
+
+        return "";
+
+    }
+
+    const pad = value =>
+        String(value).padStart(2, "0");
+
+    return (
+        `${date.getFullYear()}.` +
+        `${pad(date.getMonth() + 1)}.` +
+        `${pad(date.getDate())} ` +
+        `${pad(date.getHours())}:` +
+        `${pad(date.getMinutes())}`
+    );
+
+}
+
+
+function renderScoreHistory() {
+
+    scoreHistoryListElement.innerHTML =
+        "";
+
+    const history =
+        loadScoreHistory();
+
+    if (history.length === 0) {
+
+        const emptyMessage =
+            document.createElement("div");
+
+        emptyMessage.classList.add(
+            "discard-empty"
+        );
+
+        emptyMessage.textContent =
+            "아직 기록이 없습니다.";
+
+        scoreHistoryListElement.appendChild(
+            emptyMessage
+        );
+
+        return;
+
+    }
+
+    history.forEach(entry => {
+
+        const item =
+            document.createElement("div");
+
+        item.classList.add(
+            "score-history-item",
+            entry.result === "win"
+                ? "result-win"
+                : "result-gameover"
+        );
+
+        const left =
+            document.createElement("div");
+
+        const resultLabel =
+            document.createElement("div");
+
+        resultLabel.classList.add(
+            "history-result"
+        );
+
+        resultLabel.textContent =
+            entry.result === "win"
+                ? "화료"
+                : "게임 종료";
+
+        left.appendChild(resultLabel);
+
+        if (entry.detail) {
+
+            const detailLine =
+                document.createElement("div");
+
+            detailLine.classList.add(
+                "history-detail"
+            );
+
+            detailLine.textContent =
+                entry.detail;
+
+            left.appendChild(detailLine);
+
+        }
+
+        const dateLine =
+            document.createElement("div");
+
+        dateLine.classList.add(
+            "history-date"
+        );
+
+        dateLine.textContent =
+            formatHistoryDate(entry.date);
+
+        left.appendChild(dateLine);
+
+        const scoreLabel =
+            document.createElement("div");
+
+        scoreLabel.classList.add(
+            "history-score"
+        );
+
+        scoreLabel.textContent =
+            `${(entry.score || 0).toLocaleString()}점`;
+
+        item.appendChild(left);
+
+        item.appendChild(scoreLabel);
+
+        scoreHistoryListElement.appendChild(
+            item
+        );
+
+    });
+
+}
+
+
+function showScoreHistory() {
+
+    renderScoreHistory();
+
+    scoreHistoryOverlayElement.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+function hideScoreHistory() {
+
+    scoreHistoryOverlayElement.classList.add(
         "hidden"
     );
 
@@ -3786,6 +4068,72 @@ closeYakuGuideButton.addEventListener(
 );
 
 
+startGameButton.addEventListener(
+    "click",
+    () => {
+
+        hideStartScreen();
+
+        startGame();
+
+    }
+);
+
+
+startHistoryButton.addEventListener(
+    "click",
+    showScoreHistory
+);
+
+
+scoreHistoryButton.addEventListener(
+    "click",
+    showScoreHistory
+);
+
+
+closeScoreHistoryButton.addEventListener(
+    "click",
+    hideScoreHistory
+);
+
+
+clearScoreHistoryButton.addEventListener(
+    "click",
+    () => {
+
+        const confirmed =
+            window.confirm(
+                "점수 기록을 전부 지울까요? 되돌릴 수 없습니다."
+            );
+
+        if (!confirmed) {
+
+            return;
+
+        }
+
+        try {
+
+            localStorage.removeItem(
+                SCORE_HISTORY_STORAGE_KEY
+            );
+
+        } catch (error) {
+
+            console.error(
+                "점수 기록을 지우지 못했습니다.",
+                error
+            );
+
+        }
+
+        renderScoreHistory();
+
+    }
+);
+
+
 winButton.addEventListener(
     "click",
     () => {
@@ -3877,6 +4225,9 @@ winButton.addEventListener(
         );
 
 
+        recordGameResult("win", yakuText);
+
+
         showResult(
             "화료!",
             yakuText,
@@ -3900,6 +4251,7 @@ winButton.addEventListener(
 
 /* =========================================================
    28. 게임 실행
-========================================================= */
 
-startGame();
+   자동으로 시작하지 않고,
+   시작 화면의 "게임 시작" 버튼을 눌러야 startGame()이 호출된다.
+========================================================= */
