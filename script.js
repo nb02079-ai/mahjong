@@ -279,6 +279,20 @@ let currentStage = 1;
 let coins = 0;
 let lastStageCoinsEarned = 0;
 
+/*
+    스테이지 모드에서 1~N 스테이지 점수의 총합
+    (런이 끝났을 때 최종 점수로 사용)
+*/
+
+let stageScoreTotal = 0;
+
+/*
+    방금 끝난 스테이지가 화료로 끝났는지(true) /
+    턴 소진 등으로 실패했는지(false)
+*/
+
+let lastStageResultWasWin = false;
+
 function createEmptyStageUpgrades() {
 
     return {
@@ -467,6 +481,9 @@ const shopNextStageButton =
 
 const runSummaryOverlayElement =
     document.getElementById("run-summary-overlay");
+
+const runSummaryTitleElement =
+    document.getElementById("run-summary-title");
 
 const runSummaryDetailElement =
     document.getElementById("run-summary-detail");
@@ -4077,6 +4094,9 @@ function endGame(message) {
     recordGameResult("gameover", message);
 
 
+    lastStageResultWasWin = false;
+
+
     showResult(
         "게임 종료",
         message,
@@ -4114,7 +4134,7 @@ function showResult(title, message, isWin) {
     if (gameMode === "stage") {
 
         restartButton.textContent =
-            currentStage >= TOTAL_STAGES
+            (!isWin || currentStage >= TOTAL_STAGES)
                 ? "결과 확인"
                 : "상점으로";
 
@@ -4184,11 +4204,27 @@ function advanceStageFlow() {
 
     coins += lastStageCoinsEarned;
 
+    stageScoreTotal += score;
+
     updateStageHud();
+
+
+    if (!lastStageResultWasWin) {
+
+        /*
+            화료에 실패하면 상점을 거치지 않고
+            바로 런이 종료된다.
+        */
+
+        showRunSummary(true);
+
+        return;
+
+    }
 
     if (currentStage >= TOTAL_STAGES) {
 
-        showRunSummary();
+        showRunSummary(false);
 
     } else {
 
@@ -4367,10 +4403,28 @@ function buyShopItem(item) {
    런 결과 (5스테이지 종료)
 ========================================================= */
 
-function showRunSummary() {
+/* =========================================================
+   런 결과 (5스테이지 종료 또는 화료 실패로 조기 종료)
+========================================================= */
+
+function showRunSummary(failedEarly) {
+
+    runSummaryTitleElement.textContent =
+        failedEarly
+            ? "런 종료"
+            : "스테이지 모드 클리어!";
+
+    const reachedStage =
+        Math.min(currentStage, TOTAL_STAGES);
 
     runSummaryDetailElement.textContent =
-        `${TOTAL_STAGES}스테이지를 모두 마쳤어요!\n` +
+        (
+            failedEarly
+                ? `${currentStage}스테이지에서 화료에 실패해 런이 종료됐어요.\n`
+                : `${TOTAL_STAGES}스테이지를 모두 마쳤어요!\n`
+        ) +
+        `최종 점수 (1~${reachedStage}스테이지 합): ` +
+        `${stageScoreTotal.toLocaleString()}점\n` +
         `최종 코인: ${coins}`;
 
     runSummaryOverlayElement.classList.remove(
@@ -5045,6 +5099,10 @@ startStageModeButton.addEventListener(
 
         coins = 0;
 
+        stageScoreTotal = 0;
+
+        lastStageResultWasWin = false;
+
         stageUpgrades =
             createEmptyStageUpgrades();
 
@@ -5244,6 +5302,9 @@ winButton.addEventListener(
 
 
         recordGameResult("win", yakuText);
+
+
+        lastStageResultWasWin = true;
 
 
         showResult(
