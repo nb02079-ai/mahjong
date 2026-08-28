@@ -177,6 +177,15 @@ const discardHistoryCountElement =
 const closeDiscardHistoryButton =
     document.getElementById("close-discard-history");
 
+const yakuGuideButton =
+    document.getElementById("yaku-guide-button");
+
+const yakuGuideOverlayElement =
+    document.getElementById("yaku-guide-overlay");
+
+const closeYakuGuideButton =
+    document.getElementById("close-yaku-guide");
+
 
 /* =========================================================
    5. 게임 시작
@@ -3160,6 +3169,28 @@ function hideDiscardHistory() {
 
 
 /* =========================================================
+   역 목록 안내
+========================================================= */
+
+function showYakuGuide() {
+
+    yakuGuideOverlayElement.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+function hideYakuGuide() {
+
+    yakuGuideOverlayElement.classList.add(
+        "hidden"
+    );
+
+}
+
+
+/* =========================================================
    셔플
 ========================================================= */
 
@@ -3290,6 +3321,18 @@ discardHistoryButton.addEventListener(
 closeDiscardHistoryButton.addEventListener(
     "click",
     hideDiscardHistory
+);
+
+
+yakuGuideButton.addEventListener(
+    "click",
+    showYakuGuide
+);
+
+
+closeYakuGuideButton.addEventListener(
+    "click",
+    hideYakuGuide
 );
 
 
