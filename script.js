@@ -138,6 +138,21 @@ const gameStatusElement =
 const handCountElement =
     document.getElementById("hand-count");
 
+const resultOverlayElement =
+    document.getElementById("result-overlay");
+
+const resultTitleElement =
+    document.getElementById("result-title");
+
+const resultMessageElement =
+    document.getElementById("result-message");
+
+const resultScoreElement =
+    document.getElementById("result-score");
+
+const restartButton =
+    document.getElementById("restart-button");
+
 
 /* =========================================================
    5. 게임 시작
@@ -159,6 +174,8 @@ function startGame() {
 
     kanCount = 0;
 
+    score = 0;
+
     doraIndicators = [];
 
     selectedTileIndex = null;
@@ -170,6 +187,8 @@ function startGame() {
     isRinshan = false;
 
     isHaitei = false;
+
+    hideResult();
 
     discardButton.disabled = false;
 
@@ -2917,6 +2936,54 @@ function endGame(message) {
 
     removeKanChoices();
 
+
+    showResult(
+        "게임 종료",
+        message,
+        false
+    );
+
+}
+
+
+/* =========================================================
+   결과 오버레이
+========================================================= */
+
+function showResult(title, message, isWin) {
+
+    resultTitleElement.textContent =
+        title;
+
+    resultTitleElement.classList.toggle(
+        "win",
+        isWin
+    );
+
+    resultTitleElement.classList.toggle(
+        "gameover",
+        !isWin
+    );
+
+    resultMessageElement.textContent =
+        message;
+
+    resultScoreElement.textContent =
+        `최종 점수: ${score.toLocaleString()}점`;
+
+    resultOverlayElement.classList.remove(
+        "hidden"
+    );
+
+}
+
+
+function hideResult() {
+
+    resultOverlayElement.classList.add(
+        "hidden"
+    );
+
 }
 
 
@@ -3030,6 +3097,18 @@ kanButton.addEventListener(
 );
 
 
+restartButton.addEventListener(
+    "click",
+    () => {
+
+        hideResult();
+
+        startGame();
+
+    }
+);
+
+
 winButton.addEventListener(
     "click",
     () => {
@@ -3118,6 +3197,13 @@ winButton.addEventListener(
 
         setStatus(
             `화료! ${yakuText} → +${winResult.score.toLocaleString()}점`
+        );
+
+
+        showResult(
+            "화료!",
+            yakuText,
+            true
         );
 
 

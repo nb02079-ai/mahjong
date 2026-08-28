@@ -679,3 +679,90 @@ body {
 .kan-choice-button {
     min-width: 90px;
 }
+
+
+/* =========================
+   RESULT OVERLAY
+========================= */
+
+.result-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(10, 11, 13, 0.72);
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    z-index: 1000;
+}
+
+.result-overlay.hidden {
+    display: none;
+}
+
+.result-modal {
+    min-width: 320px;
+
+    max-width: 90vw;
+
+    padding: 40px 50px;
+
+    background: #24272b;
+
+    border: 1px solid #3b3f44;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, 0.5);
+
+    text-align: center;
+}
+
+.result-title {
+    font-size: 26px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 14px;
+}
+
+.result-title.win {
+    color: #e3c15a;
+}
+
+.result-title.gameover {
+    color: #b8bdc4;
+}
+
+.result-message {
+    color: #c7cbd1;
+
+    font-size: 14px;
+
+    line-height: 1.7;
+
+    white-space: pre-line;
+
+    margin-bottom: 10px;
+}
+
+.result-score {
+    color: #f1f1f1;
+
+    font-size: 20px;
+
+    font-weight: 700;
+
+    margin-bottom: 26px;
+}
+
+.restart-button {
+    min-width: 160px;
+}
