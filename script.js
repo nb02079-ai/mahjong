@@ -230,13 +230,13 @@ const WIND_BADGES =
 function buildTileChrome(badgeText, badgeColor) {
 
     return (
-        `<rect x="0" y="0" width="60" height="7" ` +
+        `<rect x="0" y="0" width="60" height="9" ` +
         `fill="${TILE_TOP_BAR_COLOR}"/>` +
         (
             badgeText
-                ? `<text x="53" y="18" text-anchor="end" ` +
-                  `font-family="Arial, sans-serif" font-weight="700" ` +
-                  `font-size="10" fill="${badgeColor}">${badgeText}</text>`
+                ? `<text x="55" y="20" text-anchor="end" ` +
+                  `font-family="Arial, sans-serif" font-weight="900" ` +
+                  `font-size="13" fill="${badgeColor}">${badgeText}</text>`
                 : ""
         )
     );
@@ -257,7 +257,7 @@ const PIN_DOT_LAYOUTS = {
     6: [[20, 22, 6.5], [40, 22, 6.5], [20, 42, 6.5], [40, 42, 6.5], [20, 62, 6.5], [40, 62, 6.5]],
     7: [[20, 18, 6], [40, 18, 6], [20, 36, 6], [40, 36, 6], [20, 54, 6], [40, 54, 6], [30, 68, 6]],
     8: [[20, 18, 6], [40, 18, 6], [20, 34, 6], [40, 34, 6], [20, 50, 6], [40, 50, 6], [20, 66, 6], [40, 66, 6]],
-    9: [[18, 18, 5.8], [30, 18, 5.8], [42, 18, 5.8], [18, 42, 5.8], [30, 42, 5.8], [42, 42, 5.8], [18, 66, 5.8], [30, 66, 5.8], [42, 66, 5.8]]
+    9: [[17, 20, 5.6], [29, 20, 5.6], [41, 20, 5.6], [17, 42, 5.6], [29, 42, 5.6], [41, 42, 5.6], [17, 64, 5.6], [29, 64, 5.6], [41, 64, 5.6]]
 };
 
 
