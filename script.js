@@ -8,7 +8,7 @@
    1. 게임 설정
 ========================================================= */
 
-const MAX_TURNS = 70;
+const MAX_TURNS = 75;
 const WILD_COUNT = 2;
 const DEAD_WALL_SIZE = 5;
 
