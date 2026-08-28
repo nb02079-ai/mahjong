@@ -203,6 +203,245 @@ function getSuitClass(tile) {
 
 
 /* =========================================================
+   패 SVG 생성
+
+   유니코드 마작패 글리프는 시스템 폰트에 따라
+   가늘고 흐릿하게 보이는 경우가 많아서,
+   직접 그린 SVG로 패 얼굴을 렌더링한다.
+========================================================= */
+
+const TILE_SVG_VIEWBOX = "0 0 60 80";
+
+/*
+   통수(핀) 원 배치 좌표 (전통적인 배치를 단순화)
+*/
+
+const PIN_DOT_LAYOUTS = {
+    1: [[30, 40, 11]],
+    2: [[30, 24, 8], [30, 56, 8]],
+    3: [[18, 22, 7], [30, 40, 7], [42, 58, 7]],
+    4: [[20, 24, 7], [40, 24, 7], [20, 56, 7], [40, 56, 7]],
+    5: [[20, 24, 7], [40, 24, 7], [30, 40, 7], [20, 56, 7], [40, 56, 7]],
+    6: [[20, 20, 6.5], [40, 20, 6.5], [20, 40, 6.5], [40, 40, 6.5], [20, 60, 6.5], [40, 60, 6.5]],
+    7: [[20, 16, 6], [40, 16, 6], [20, 34, 6], [40, 34, 6], [20, 52, 6], [40, 52, 6], [30, 66, 6]],
+    8: [[20, 16, 6], [40, 16, 6], [20, 32, 6], [40, 32, 6], [20, 48, 6], [40, 48, 6], [20, 64, 6], [40, 64, 6]],
+    9: [[18, 16, 5.8], [30, 16, 5.8], [42, 16, 5.8], [18, 40, 5.8], [30, 40, 5.8], [42, 40, 5.8], [18, 64, 5.8], [30, 64, 5.8], [42, 64, 5.8]]
+};
+
+function buildPinDots(count, color) {
+
+    const layout =
+        PIN_DOT_LAYOUTS[count] || [];
+
+    return layout
+        .map(([cx, cy, r]) =>
+            `<circle cx="${cx}" cy="${cy}" r="${r}" ` +
+            `fill="${color}" stroke="#0000001a" stroke-width="0.5"/>`
+        )
+        .join("");
+
+}
+
+
+/*
+   삭수 막대(대나무) 배치 - 통수와 같은 좌표를
+   재사용하되 원 대신 작은 세로 막대로 그린다.
+*/
+
+function buildSouSticks(count, color) {
+
+    const layout =
+        PIN_DOT_LAYOUTS[count] || [];
+
+    return layout
+        .map(([cx, cy]) => {
+
+            const stickHeight =
+                count === 1 ? 30 : 13;
+
+            const stickWidth =
+                count === 1 ? 8 : 5;
+
+            const y =
+                cy - stickHeight / 2;
+
+            const x =
+                cx - stickWidth / 2;
+
+            return (
+                `<rect x="${x}" y="${y}" ` +
+                `width="${stickWidth}" height="${stickHeight}" ` +
+                `rx="${stickWidth / 2.5}" fill="${color}"/>` +
+                `<line x1="${cx - stickWidth / 2 + 1}" y1="${cy}" ` +
+                `x2="${cx + stickWidth / 2 - 1}" y2="${cy}" ` +
+                `stroke="#0000002a" stroke-width="1"/>`
+            );
+
+        })
+        .join("");
+
+}
+
+
+function buildTileSVG(tile) {
+
+    if (tile === "★") {
+
+        return (
+            `<svg viewBox="${TILE_SVG_VIEWBOX}" ` +
+            `xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">` +
+            `<path d="M30 12 L36 30 L55 30 L39 42 L45 60 ` +
+            `L30 48 L15 60 L21 42 L5 30 L24 30 Z" ` +
+            `fill="#151515"/></svg>`
+        );
+
+    }
+
+    const isRed =
+        isRedFive(tile);
+
+    const base =
+        baseTile(tile);
+
+    const idx =
+        TILE_TYPES.indexOf(base);
+
+    if (idx < 0) {
+
+        return null;
+
+    }
+
+    let inner = "";
+
+
+    /*
+        만수
+    */
+
+    if (idx <= 8) {
+
+        const number = idx + 1;
+
+        const color =
+            isRed ? "#c0392b" : "#1a1a1a";
+
+        inner =
+            `<text x="30" y="34" text-anchor="middle" ` +
+            `font-family="Arial, sans-serif" font-weight="900" ` +
+            `font-size="28" fill="${color}">${number}</text>` +
+            `<text x="30" y="63" text-anchor="middle" ` +
+            `font-family="'Noto Serif KR', serif" font-weight="700" ` +
+            `font-size="24" fill="${color}">萬</text>`;
+
+    }
+
+
+    /*
+        통수
+    */
+
+    else if (idx <= 17) {
+
+        const number = idx - 8;
+
+        const color =
+            isRed ? "#c0392b" : "#1c6f8c";
+
+        inner =
+            buildPinDots(number, color);
+
+    }
+
+
+    /*
+        삭수
+    */
+
+    else if (idx <= 26) {
+
+        const number = idx - 17;
+
+        const color =
+            isRed ? "#c0392b" : "#1f8a4c";
+
+        inner =
+            buildSouSticks(number, color);
+
+    }
+
+
+    /*
+        풍패
+    */
+
+    else if (idx <= 30) {
+
+        const windChars =
+            ["東", "南", "西", "北"];
+
+        const ch =
+            windChars[idx - 27];
+
+        inner =
+            `<text x="30" y="53" text-anchor="middle" ` +
+            `font-family="'Noto Serif KR', serif" font-weight="900" ` +
+            `font-size="36" fill="#1a1a1a">${ch}</text>`;
+
+    }
+
+
+    /*
+        중 (홍중)
+    */
+
+    else if (idx === 31) {
+
+        inner =
+            `<text x="30" y="53" text-anchor="middle" ` +
+            `font-family="'Noto Serif KR', serif" font-weight="900" ` +
+            `font-size="36" fill="#c62828">中</text>`;
+
+    }
+
+
+    /*
+        발
+    */
+
+    else if (idx === 32) {
+
+        inner =
+            `<text x="30" y="53" text-anchor="middle" ` +
+            `font-family="'Noto Serif KR', serif" font-weight="900" ` +
+            `font-size="36" fill="#1f8a4c">發</text>`;
+
+    }
+
+
+    /*
+        백 (백은 전통적으로 빈 패 + 파란 테두리)
+    */
+
+    else if (idx === 33) {
+
+        inner =
+            `<rect x="11" y="13" width="38" height="54" rx="5" ` +
+            `fill="none" stroke="#2f6fb0" stroke-width="4"/>`;
+
+    }
+
+    return (
+        `<svg viewBox="${TILE_SVG_VIEWBOX}" ` +
+        `xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">` +
+        inner +
+        `</svg>`
+    );
+
+}
+
+
+/* =========================================================
    3. 게임 상태
 ========================================================= */
 
@@ -3653,6 +3892,7 @@ function renderHand() {
 
 
             button.innerHTML =
+                buildTileSVG(tile) ||
                 `<span>${tile}</span>`;
 
 
@@ -3742,6 +3982,7 @@ function renderDrawnTile() {
             }
 
             tile.innerHTML =
+                buildTileSVG(candidate) ||
                 `<span>${candidate}</span>`;
 
             tile.addEventListener(
@@ -3833,6 +4074,7 @@ function renderDrawnTile() {
 
 
     tile.innerHTML =
+        buildTileSVG(drawnTile) ||
         `<span>${drawnTile}</span>`;
 
 
@@ -3896,6 +4138,7 @@ function renderDora() {
                 doraIndicators[i];
 
             element.innerHTML =
+                buildTileSVG(indicatorTile) ||
                 `<span>${indicatorTile}</span>`;
 
             const indicatorSuitClass =
@@ -4552,6 +4795,7 @@ function renderDiscardHistory() {
         }
 
         tileElement.innerHTML =
+            buildTileSVG(tile) ||
             `<span>${tile}</span>`;
 
 
@@ -4641,6 +4885,40 @@ const SCORE_HISTORY_STORAGE_KEY =
 
 const MAX_SCORE_HISTORY_ENTRIES = 50;
 
+function sanitizeHistoryEntry(entry) {
+
+    if (
+        !entry ||
+        typeof entry !== "object"
+    ) {
+
+        return null;
+
+    }
+
+    return {
+        date:
+            typeof entry.date === "string"
+                ? entry.date
+                : "",
+        score:
+            typeof entry.score === "number" &&
+            !isNaN(entry.score)
+                ? entry.score
+                : 0,
+        result:
+            entry.result === "win"
+                ? "win"
+                : "gameover",
+        detail:
+            typeof entry.detail === "string"
+                ? entry.detail
+                : ""
+    };
+
+}
+
+
 function loadScoreHistory() {
 
     try {
@@ -4650,12 +4928,29 @@ function loadScoreHistory() {
                 SCORE_HISTORY_STORAGE_KEY
             );
 
-        const parsed =
-            raw ? JSON.parse(raw) : [];
+        if (!raw) {
 
-        return Array.isArray(parsed)
-            ? parsed
-            : [];
+            return [];
+
+        }
+
+        const parsed =
+            JSON.parse(raw);
+
+        if (!Array.isArray(parsed)) {
+
+            return [];
+
+        }
+
+        /*
+            형식이 깨졌거나 예상과 다른 값이 섞여 있어도
+            안전한 기본값으로 정규화해서 반환한다.
+        */
+
+        return parsed
+            .map(sanitizeHistoryEntry)
+            .filter(entry => entry !== null);
 
     } catch (error) {
 
@@ -4981,6 +5276,7 @@ function renderKanMelds() {
 
 
                 tile.innerHTML =
+                    buildTileSVG(kanTile) ||
                     `<span>${kanTile}</span>`;
 
 

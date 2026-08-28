@@ -17,6 +17,18 @@ button {
    BODY
 ========================= */
 
+:root {
+    --font-body:
+        "Noto Sans KR",
+        Arial,
+        sans-serif;
+
+    --font-display:
+        "Cinzel",
+        "Noto Sans KR",
+        serif;
+}
+
 body {
     min-height: 100vh;
 
@@ -24,10 +36,9 @@ body {
 
     color: #eef0ea;
 
-    font-family:
-        Arial,
-        "Noto Sans KR",
-        sans-serif;
+    font-family: var(--font-body);
+
+    line-height: 1.5;
 
     display: flex;
     justify-content: center;
@@ -44,8 +55,6 @@ body {
 .game-container {
     width: 100%;
     max-width: 1100px;
-
-    min-height: 850px;
 
     background: #16261f;
 
@@ -81,7 +90,11 @@ body {
 }
 
 .game-title h1 {
+    font-family: var(--font-display);
+
     font-size: 28px;
+
+    font-weight: 700;
 
     letter-spacing: 3px;
 }
@@ -782,6 +795,62 @@ body {
 
 }
 
+
+/* =========================
+   짧은 화면(예: 1366×768) 대응
+
+   세로 여백을 줄여서 핵심 조작 버튼이
+   화면 아래로 밀려나 잘리지 않게 한다.
+========================= */
+
+@media (max-height: 820px) {
+
+    body {
+        padding: 12px;
+    }
+
+    .game-header {
+        padding: 14px 35px;
+    }
+
+    .game-board {
+        padding: 14px 45px 16px;
+    }
+
+    .dora-indicators {
+        min-height: 55px;
+    }
+
+    .status-section {
+        margin-bottom: 4px;
+    }
+
+    .kan-melds {
+        min-height: 20px;
+
+        padding: 4px 5px;
+    }
+
+    .player-hand {
+        padding: 8px 5px;
+    }
+
+    .drawn-tile-container {
+        min-height: 64px;
+    }
+
+    .action-section {
+        margin-top: 14px;
+    }
+
+    .game-footer {
+        min-height: 46px;
+
+        padding: 8px 35px;
+    }
+
+}
+
 /* =========================
    DORA TILE HIGHLIGHT
 ========================= */
@@ -968,11 +1037,13 @@ body {
 }
 
 .result-title {
-    font-size: 26px;
+    font-family: var(--font-display);
+
+    font-size: 28px;
 
     font-weight: 700;
 
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
 
     margin-bottom: 14px;
 }
@@ -1500,7 +1571,11 @@ body {
 }
 
 .start-modal h1 {
-    font-size: 28px;
+    font-family: var(--font-display);
+
+    font-size: 30px;
+
+    font-weight: 700;
 
     letter-spacing: 3px;
 }
@@ -1535,8 +1610,16 @@ body {
     line-height: 1.7;
 }
 
+.start-rules p strong {
+    color: #d4af37;
+
+    font-weight: 700;
+
+    letter-spacing: 0.5px;
+}
+
 .start-rules p + p {
-    margin-top: 6px;
+    margin-top: 8px;
 }
 
 .start-actions {
@@ -1606,7 +1689,11 @@ body {
 }
 
 .shop-modal h2 {
-    font-size: 22px;
+    font-family: var(--font-display);
+
+    font-size: 23px;
+
+    font-weight: 700;
 
     letter-spacing: 1px;
 
@@ -1733,4 +1820,24 @@ body {
     align-self: center;
 
     min-width: 200px;
+}
+
+
+/* =========================
+   REDUCED MOTION
+   (OS/브라우저의 "동작 줄이기" 설정을 켜면
+    모든 애니메이션·트랜지션을 즉시 사실상 없앤다)
+========================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+
 }
