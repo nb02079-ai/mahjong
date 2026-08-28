@@ -212,31 +212,126 @@ function getSuitClass(tile) {
 
 const TILE_SVG_VIEWBOX = "0 0 60 80";
 
+const TILE_TOP_BAR_COLOR = "#c9a24b";
+const TILE_BG_COLOR = "#f4f1e8";
+
+const MAN_NUMERALS =
+    ["一", "二", "三", "四", "五", "六", "七", "八", "九"];
+
+const WIND_BADGES =
+    ["E", "S", "W", "N"];
+
+
+/*
+   패 상단의 금색 띠 + 모서리 작은 배지
+   (모든 패 공통 장식)
+*/
+
+function buildTileChrome(badgeText, badgeColor) {
+
+    return (
+        `<rect x="0" y="0" width="60" height="7" ` +
+        `fill="${TILE_TOP_BAR_COLOR}"/>` +
+        (
+            badgeText
+                ? `<text x="53" y="18" text-anchor="end" ` +
+                  `font-family="Arial, sans-serif" font-weight="700" ` +
+                  `font-size="10" fill="${badgeColor}">${badgeText}</text>`
+                : ""
+        )
+    );
+
+}
+
+
 /*
    통수(핀) 원 배치 좌표 (전통적인 배치를 단순화)
 */
 
 const PIN_DOT_LAYOUTS = {
-    1: [[30, 40, 11]],
-    2: [[30, 24, 8], [30, 56, 8]],
-    3: [[18, 22, 7], [30, 40, 7], [42, 58, 7]],
-    4: [[20, 24, 7], [40, 24, 7], [20, 56, 7], [40, 56, 7]],
-    5: [[20, 24, 7], [40, 24, 7], [30, 40, 7], [20, 56, 7], [40, 56, 7]],
-    6: [[20, 20, 6.5], [40, 20, 6.5], [20, 40, 6.5], [40, 40, 6.5], [20, 60, 6.5], [40, 60, 6.5]],
-    7: [[20, 16, 6], [40, 16, 6], [20, 34, 6], [40, 34, 6], [20, 52, 6], [40, 52, 6], [30, 66, 6]],
-    8: [[20, 16, 6], [40, 16, 6], [20, 32, 6], [40, 32, 6], [20, 48, 6], [40, 48, 6], [20, 64, 6], [40, 64, 6]],
-    9: [[18, 16, 5.8], [30, 16, 5.8], [42, 16, 5.8], [18, 40, 5.8], [30, 40, 5.8], [42, 40, 5.8], [18, 64, 5.8], [30, 64, 5.8], [42, 64, 5.8]]
+    1: [[30, 42, 14]],
+    2: [[30, 26, 8], [30, 58, 8]],
+    3: [[18, 24, 7], [30, 42, 7], [42, 60, 7]],
+    4: [[20, 26, 7], [40, 26, 7], [20, 58, 7], [40, 58, 7]],
+    5: [[20, 26, 7], [40, 26, 7], [30, 42, 7], [20, 58, 7], [40, 58, 7]],
+    6: [[20, 22, 6.5], [40, 22, 6.5], [20, 42, 6.5], [40, 42, 6.5], [20, 62, 6.5], [40, 62, 6.5]],
+    7: [[20, 18, 6], [40, 18, 6], [20, 36, 6], [40, 36, 6], [20, 54, 6], [40, 54, 6], [30, 68, 6]],
+    8: [[20, 18, 6], [40, 18, 6], [20, 34, 6], [40, 34, 6], [20, 50, 6], [40, 50, 6], [20, 66, 6], [40, 66, 6]],
+    9: [[18, 18, 5.8], [30, 18, 5.8], [42, 18, 5.8], [18, 42, 5.8], [30, 42, 5.8], [42, 42, 5.8], [18, 66, 5.8], [30, 66, 5.8], [42, 66, 5.8]]
 };
 
+
+/*
+   통수 한 개(메달 느낌: 겹 원 + 가운데 점)
+*/
+
+function buildPinMedallion(cx, cy, r, color) {
+
+    return (
+        `<circle cx="${cx}" cy="${cy}" r="${r}" ` +
+        `fill="${color}"/>` +
+        `<circle cx="${cx}" cy="${cy}" r="${r * 0.62}" ` +
+        `fill="${TILE_BG_COLOR}"/>` +
+        `<circle cx="${cx}" cy="${cy}" r="${r * 0.26}" ` +
+        `fill="${color}"/>`
+    );
+
+}
+
+
+/*
+   1통은 조금 더 화려한 전용 문양으로 그린다
+   (겹 원 + 꽃잎처럼 방사형으로 배치한 작은 원)
+*/
+
+function buildPinFlagship(color) {
+
+    const cx = 30, cy = 42, r = 15;
+
+    let petals = "";
+
+    for (let i = 0; i < 8; i++) {
+
+        const angle =
+            (Math.PI * 2 * i) / 8;
+
+        const px =
+            cx + Math.cos(angle) * (r * 0.62);
+
+        const py =
+            cy + Math.sin(angle) * (r * 0.62);
+
+        petals +=
+            `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" ` +
+            `r="2.6" fill="${i % 2 === 0 ? color : TILE_BG_COLOR}" ` +
+            `stroke="${color}" stroke-width="0.6"/>`;
+
+    }
+
+    return (
+        `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>` +
+        `<circle cx="${cx}" cy="${cy}" r="${r * 0.72}" fill="${TILE_BG_COLOR}"/>` +
+        petals +
+        `<circle cx="${cx}" cy="${cy}" r="3" fill="${color}"/>`
+    );
+
+}
+
+
 function buildPinDots(count, color) {
+
+    if (count === 1) {
+
+        return buildPinFlagship(color);
+
+    }
 
     const layout =
         PIN_DOT_LAYOUTS[count] || [];
 
     return layout
         .map(([cx, cy, r]) =>
-            `<circle cx="${cx}" cy="${cy}" r="${r}" ` +
-            `fill="${color}" stroke="#0000001a" stroke-width="0.5"/>`
+            buildPinMedallion(cx, cy, r, color)
         )
         .join("");
 
@@ -244,40 +339,70 @@ function buildPinDots(count, color) {
 
 
 /*
-   삭수 막대(대나무) 배치 - 통수와 같은 좌표를
-   재사용하되 원 대신 작은 세로 막대로 그린다.
+   삭수 막대 하나 (마디 구분선 + 위쪽 잎사귀 느낌)
 */
 
+function buildSouStick(cx, cy, color) {
+
+    const stickHeight = 13;
+    const stickWidth = 5.4;
+
+    const y = cy - stickHeight / 2;
+    const x = cx - stickWidth / 2;
+
+    return (
+        `<rect x="${x}" y="${y}" ` +
+        `width="${stickWidth}" height="${stickHeight}" ` +
+        `rx="1.4" fill="${color}"/>` +
+        `<line x1="${x + 0.8}" y1="${y + stickHeight * 0.34}" ` +
+        `x2="${x + stickWidth - 0.8}" y2="${y + stickHeight * 0.34}" ` +
+        `stroke="${TILE_BG_COLOR}" stroke-width="0.8"/>` +
+        `<line x1="${x + 0.8}" y1="${y + stickHeight * 0.68}" ` +
+        `x2="${x + stickWidth - 0.8}" y2="${y + stickHeight * 0.68}" ` +
+        `stroke="${TILE_BG_COLOR}" stroke-width="0.8"/>` +
+        `<path d="M${cx} ${y} l-3 -3.5 m3 3.5 l3 -3.5" ` +
+        `stroke="${color}" stroke-width="1.3" fill="none" ` +
+        `stroke-linecap="round"/>`
+    );
+
+}
+
+
+/*
+   1삭은 대나무 대신 전통적으로 새(참새) 문양을 쓰므로
+   단순화한 새 실루엣으로 그린다
+*/
+
+function buildSouBird(color) {
+
+    return (
+        `<ellipse cx="30" cy="50" rx="10" ry="13" fill="${color}"/>` +
+        `<circle cx="26" cy="32" r="7" fill="${color}"/>` +
+        `<path d="M19 30 L10 27 L19 34 Z" fill="${color}"/>` +
+        `<path d="M34 46 Q46 44 44 58 Q38 54 34 52 Z" ` +
+        `fill="${color}" opacity="0.85"/>` +
+        `<circle cx="28" cy="30" r="1.3" fill="${TILE_BG_COLOR}"/>` +
+        `<ellipse cx="30" cy="66" rx="12" ry="3" fill="${color}" opacity="0.5"/>`
+    );
+
+}
+
+
 function buildSouSticks(count, color) {
+
+    if (count === 1) {
+
+        return buildSouBird(color);
+
+    }
 
     const layout =
         PIN_DOT_LAYOUTS[count] || [];
 
     return layout
-        .map(([cx, cy]) => {
-
-            const stickHeight =
-                count === 1 ? 30 : 13;
-
-            const stickWidth =
-                count === 1 ? 8 : 5;
-
-            const y =
-                cy - stickHeight / 2;
-
-            const x =
-                cx - stickWidth / 2;
-
-            return (
-                `<rect x="${x}" y="${y}" ` +
-                `width="${stickWidth}" height="${stickHeight}" ` +
-                `rx="${stickWidth / 2.5}" fill="${color}"/>` +
-                `<line x1="${cx - stickWidth / 2 + 1}" y1="${cy}" ` +
-                `x2="${cx + stickWidth / 2 - 1}" y2="${cy}" ` +
-                `stroke="#0000002a" stroke-width="1"/>`
-            );
-
-        })
+        .map(([cx, cy]) =>
+            buildSouStick(cx, cy, color)
+        )
         .join("");
 
 }
@@ -290,8 +415,9 @@ function buildTileSVG(tile) {
         return (
             `<svg viewBox="${TILE_SVG_VIEWBOX}" ` +
             `xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">` +
-            `<path d="M30 12 L36 30 L55 30 L39 42 L45 60 ` +
-            `L30 48 L15 60 L21 42 L5 30 L24 30 Z" ` +
+            buildTileChrome("", "") +
+            `<path d="M30 16 L36 33 L54 33 L39 44 L45 61 ` +
+            `L30 50 L15 61 L21 44 L6 33 L24 33 Z" ` +
             `fill="#151515"/></svg>`
         );
 
@@ -327,12 +453,13 @@ function buildTileSVG(tile) {
             isRed ? "#c0392b" : "#1a1a1a";
 
         inner =
-            `<text x="30" y="34" text-anchor="middle" ` +
-            `font-family="Arial, sans-serif" font-weight="900" ` +
-            `font-size="28" fill="${color}">${number}</text>` +
-            `<text x="30" y="63" text-anchor="middle" ` +
+            buildTileChrome(String(number), color) +
+            `<text x="30" y="42" text-anchor="middle" ` +
+            `font-family="'Noto Serif KR', serif" font-weight="900" ` +
+            `font-size="26" fill="${color}">${MAN_NUMERALS[idx]}</text>` +
+            `<text x="30" y="67" text-anchor="middle" ` +
             `font-family="'Noto Serif KR', serif" font-weight="700" ` +
-            `font-size="24" fill="${color}">萬</text>`;
+            `font-size="20" fill="${color}">萬</text>`;
 
     }
 
@@ -349,6 +476,7 @@ function buildTileSVG(tile) {
             isRed ? "#c0392b" : "#1c6f8c";
 
         inner =
+            buildTileChrome(String(number), color) +
             buildPinDots(number, color);
 
     }
@@ -366,6 +494,7 @@ function buildTileSVG(tile) {
             isRed ? "#c0392b" : "#1f8a4c";
 
         inner =
+            buildTileChrome(String(number), color) +
             buildSouSticks(number, color);
 
     }
@@ -384,9 +513,10 @@ function buildTileSVG(tile) {
             windChars[idx - 27];
 
         inner =
-            `<text x="30" y="53" text-anchor="middle" ` +
+            buildTileChrome(WIND_BADGES[idx - 27], "#1a1a1a") +
+            `<text x="30" y="55" text-anchor="middle" ` +
             `font-family="'Noto Serif KR', serif" font-weight="900" ` +
-            `font-size="36" fill="#1a1a1a">${ch}</text>`;
+            `font-size="34" fill="#1a1a1a">${ch}</text>`;
 
     }
 
@@ -398,9 +528,10 @@ function buildTileSVG(tile) {
     else if (idx === 31) {
 
         inner =
-            `<text x="30" y="53" text-anchor="middle" ` +
+            buildTileChrome("R", "#c62828") +
+            `<text x="30" y="55" text-anchor="middle" ` +
             `font-family="'Noto Serif KR', serif" font-weight="900" ` +
-            `font-size="36" fill="#c62828">中</text>`;
+            `font-size="34" fill="#c62828">中</text>`;
 
     }
 
@@ -412,9 +543,10 @@ function buildTileSVG(tile) {
     else if (idx === 32) {
 
         inner =
-            `<text x="30" y="53" text-anchor="middle" ` +
+            buildTileChrome("G", "#1f8a4c") +
+            `<text x="30" y="55" text-anchor="middle" ` +
             `font-family="'Noto Serif KR', serif" font-weight="900" ` +
-            `font-size="36" fill="#1f8a4c">發</text>`;
+            `font-size="34" fill="#1f8a4c">發</text>`;
 
     }
 
@@ -426,7 +558,8 @@ function buildTileSVG(tile) {
     else if (idx === 33) {
 
         inner =
-            `<rect x="11" y="13" width="38" height="54" rx="5" ` +
+            buildTileChrome("Wh", "#2f6fb0") +
+            `<rect x="12" y="16" width="36" height="52" rx="5" ` +
             `fill="none" stroke="#2f6fb0" stroke-width="4"/>`;
 
     }
