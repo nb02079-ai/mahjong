@@ -634,6 +634,48 @@ body {
         0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
+
+/* =========================
+   수패/자패별 색상 구분
+========================= */
+
+.tile.suit-man {
+    color: #1a1a1a;
+}
+
+.tile.suit-pin {
+    color: #1c6f8c;
+}
+
+.tile.suit-sou {
+    color: #1f8a4c;
+}
+
+.tile.suit-wind {
+    color: #2a2a2a;
+}
+
+.tile.suit-chun {
+    color: #c62828;
+}
+
+.tile.suit-hatsu {
+    color: #1f8a4c;
+}
+
+.tile.suit-haku {
+    color: #2f6fb0;
+}
+
+
+/* 적도라(빨간 5) - 수패색보다 우선 적용 */
+
+.tile.tile-red-five {
+    color: #d63333;
+
+    font-weight: 700;
+}
+
 /* =========================
    SELECTED DRAWN TILE
 ========================= */

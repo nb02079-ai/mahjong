@@ -55,6 +55,92 @@ const DRAGONS = [31, 32, 33];
 const GREEN_TILE_INDEXES = [19, 20, 21, 23, 25, 32];
 
 
+/*
+    적도라(빨간 5) 처리용 마커
+
+    실제 마작에서 적도라는 그냥 평범한 5와
+    몸통/깡을 만들 때는 완전히 동일하게 취급되고,
+    "패에 들어있기만 하면 도라 1개로 쳐준다"는
+    보너스만 붙는 특수한 5다.
+
+    구현상으로는 5m/5p/5s 4장 중 1장씩을
+    눈에 보이지 않는 마커를 붙인 문자열로 표시해서
+    "이 패가 적도라 인스턴스인지"만 구분하고,
+    실제 패 종류 비교(정렬/몸통 구성/깡 등)는
+    전부 baseTile()로 마커를 벗겨낸 값으로 한다.
+*/
+
+const RED_FIVE_MARKER = "\u2009";
+
+function baseTile(tile) {
+
+    if (typeof tile !== "string") {
+
+        return tile;
+
+    }
+
+    return tile.endsWith(RED_FIVE_MARKER)
+        ? tile.slice(0, -RED_FIVE_MARKER.length)
+        : tile;
+
+}
+
+function isRedFive(tile) {
+
+    return (
+        typeof tile === "string" &&
+        tile.endsWith(RED_FIVE_MARKER)
+    );
+
+}
+
+function markRedFive(tile) {
+
+    return tile + RED_FIVE_MARKER;
+
+}
+
+function tileIndexOf(tile) {
+
+    return TILE_TYPES.indexOf(baseTile(tile));
+
+}
+
+
+/*
+    수패/자패별 CSS 색상 구분용 클래스 이름
+*/
+
+function getSuitClass(tile) {
+
+    if (tile === "★") {
+
+        return "";
+
+    }
+
+    const idx = tileIndexOf(tile);
+
+    if (idx < 0) {
+
+        return "";
+
+    }
+
+    if (idx <= 8) return "suit-man";
+    if (idx <= 17) return "suit-pin";
+    if (idx <= 26) return "suit-sou";
+    if (idx <= 30) return "suit-wind";
+    if (idx === 31) return "suit-chun";
+    if (idx === 32) return "suit-hatsu";
+    if (idx === 33) return "suit-haku";
+
+    return "";
+
+}
+
+
 /* =========================================================
    3. 게임 상태
 ========================================================= */
@@ -86,6 +172,14 @@ let gameEnded = false;
 */
 
 let discardedTiles = [];
+
+/*
+    깡에 포함되어 사라진 적도라 개수
+    (치토이츠/국사무쌍 등은 깡이 없을 때만 성립하므로
+     이 값은 그런 특수 구조 판정에는 영향을 주지 않는다)
+*/
+
+let redFivesInKan = 0;
 
 
 /*
@@ -211,6 +305,8 @@ function startGame() {
 
     discardedTiles = [];
 
+    redFivesInKan = 0;
+
     doraIndicators = [];
 
     selectedTileIndex = null;
@@ -261,11 +357,26 @@ function initializeTiles() {
 
     wall = [];
 
-    TILE_TYPES.forEach(tile => {
+    /*
+        각 수패의 "5" 인덱스 (5만/5통/5삭)
+        이 중 4장 중 1장을 적도라로 표시한다.
+    */
+
+    const RED_FIVE_INDEXES = [4, 13, 22];
+
+    TILE_TYPES.forEach((tile, tileIndex) => {
 
         for (let i = 0; i < 4; i++) {
 
-            wall.push(tile);
+            const isRedFiveSlot =
+                RED_FIVE_INDEXES.includes(tileIndex) &&
+                i === 0;
+
+            wall.push(
+                isRedFiveSlot
+                    ? markRedFive(tile)
+                    : tile
+            );
 
         }
 
@@ -399,7 +510,7 @@ function revealInitialDora() {
 function getDoraTile(indicator) {
 
     const index =
-        TILE_TYPES.indexOf(indicator);
+        tileIndexOf(indicator);
 
     if (index === -1) {
 
@@ -828,8 +939,10 @@ function getKanCandidates() {
         }
 
 
-        counts[tile] =
-            (counts[tile] || 0) + 1;
+        const key = baseTile(tile);
+
+        counts[key] =
+            (counts[key] || 0) + 1;
 
     });
 
@@ -951,10 +1064,12 @@ function declareKan(kanTile) {
 
     let handCount = 0;
 
+    let redFiveUsedInThisKan = 0;
+
 
     playerHand.forEach(tile => {
 
-        if (tile === kanTile) {
+        if (baseTile(tile) === kanTile) {
 
             handCount++;
 
@@ -976,9 +1091,15 @@ function declareKan(kanTile) {
             playerHand.filter(tile => {
 
                 if (
-                    tile === kanTile &&
+                    baseTile(tile) === kanTile &&
                     removed < 4
                 ) {
+
+                    if (isRedFive(tile)) {
+
+                        redFiveUsedInThisKan++;
+
+                    }
 
                     removed++;
 
@@ -999,8 +1120,14 @@ function declareKan(kanTile) {
 
     else if (
         handCount === 3 &&
-        drawnTile === kanTile
+        baseTile(drawnTile) === kanTile
     ) {
+
+        if (isRedFive(drawnTile)) {
+
+            redFiveUsedInThisKan++;
+
+        }
 
         let removed = 0;
 
@@ -1009,9 +1136,15 @@ function declareKan(kanTile) {
             playerHand.filter(tile => {
 
                 if (
-                    tile === kanTile &&
+                    baseTile(tile) === kanTile &&
                     removed < 3
                 ) {
+
+                    if (isRedFive(tile)) {
+
+                        redFiveUsedInThisKan++;
+
+                    }
 
                     removed++;
 
@@ -1032,6 +1165,20 @@ function declareKan(kanTile) {
     else {
 
         return;
+
+    }
+
+
+    /*
+        이번 깡에 적도라가 포함됐다면
+        점수 계산용 전역 카운터에 누적
+        (깡 멜드 자체는 대표 패 1종류만 저장하므로
+         적도라 여부는 따로 추적해야 한다)
+    */
+
+    if (redFiveUsedInThisKan > 0) {
+
+        redFivesInKan += redFiveUsedInThisKan;
 
     }
 
@@ -1342,7 +1489,8 @@ function getWinResult(hand, flags) {
                 decomposition.head,
                 decomposition.melds,
                 doraTiles,
-                flags
+                flags,
+                hand
             );
 
         best = mergeBest(best, result);
@@ -1452,7 +1600,9 @@ function finalizeResult(yakuList) {
 function hasRealYaku(yakuList) {
 
     return yakuList.some(
-        yaku => yaku.name !== "도라"
+        yaku =>
+            yaku.name !== "도라" &&
+            yaku.name !== "적도라"
     );
 
 }
@@ -1471,7 +1621,7 @@ function addDoraYaku(yakuList, tiles, doraTiles) {
 
         if (
             tile !== "★" &&
-            doraTiles.includes(tile)
+            doraTiles.includes(baseTile(tile))
         ) {
 
             doraCount++;
@@ -1485,6 +1635,29 @@ function addDoraYaku(yakuList, tiles, doraTiles) {
         yakuList.push({
             name: "도라",
             han: doraCount
+        });
+
+    }
+
+}
+
+
+/*
+    손패(+이번 판에서 깡으로 사라진 패) 중
+    적도라 개수를 세어 역 목록에 추가
+*/
+
+function addRedFiveYaku(yakuList, tiles) {
+
+    const count =
+        tiles.filter(tile => isRedFive(tile)).length +
+        redFivesInKan;
+
+    if (count > 0) {
+
+        yakuList.push({
+            name: "적도라",
+            han: count
         });
 
     }
@@ -1587,6 +1760,8 @@ function checkKokushi(hand, doraTiles) {
 
     addDoraYaku(yakuList, hand, doraTiles);
 
+    addRedFiveYaku(yakuList, hand);
+
     return finalizeResult(yakuList);
 
 }
@@ -1614,8 +1789,10 @@ function checkChiitoitsu(hand, doraTiles) {
 
     normalTiles.forEach(tile => {
 
-        counts[tile] =
-            (counts[tile] || 0) + 1;
+        const key = baseTile(tile);
+
+        counts[key] =
+            (counts[key] || 0) + 1;
 
     });
 
@@ -1695,6 +1872,8 @@ function checkChiitoitsu(hand, doraTiles) {
 
     addDoraYaku(yakuList, hand, doraTiles);
 
+    addRedFiveYaku(yakuList, hand);
+
     return finalizeResult(yakuList);
 
 }
@@ -1725,7 +1904,7 @@ function checkChuurenpoutou(hand, doraTiles) {
     }
 
     const indexes =
-        normalTiles.map(tile => TILE_TYPES.indexOf(tile));
+        normalTiles.map(tile => tileIndexOf(tile));
 
 
     /*
@@ -1794,6 +1973,8 @@ function checkChuurenpoutou(hand, doraTiles) {
     ];
 
     addDoraYaku(yakuList, hand, doraTiles);
+
+    addRedFiveYaku(yakuList, hand);
 
     return finalizeResult(yakuList);
 
@@ -2039,7 +2220,7 @@ function findMeldCombinations(
     */
 
     const index =
-        TILE_TYPES.indexOf(tile);
+        tileIndexOf(tile);
 
     if (index >= 0 && index <= 26 && index % 9 <= 6) {
 
@@ -2110,7 +2291,8 @@ function evaluateStandardDecomposition(
     head,
     melds,
     doraTiles,
-    flags
+    flags,
+    rawHand
 ) {
 
     /*
@@ -2143,7 +2325,7 @@ function evaluateStandardDecomposition(
 
     const headIndex =
         headRealTile !== undefined
-            ? TILE_TYPES.indexOf(headRealTile)
+            ? tileIndexOf(headRealTile)
             : -1;
 
     const headIsWild =
@@ -2157,20 +2339,20 @@ function evaluateStandardDecomposition(
 
     const hasHonor =
         nonWildTiles.some(
-            tile => TILE_TYPES.indexOf(tile) >= 27
+            tile => tileIndexOf(tile) >= 27
         );
 
     const onlyHonor =
         nonWildTiles.length > 0 &&
         nonWildTiles.every(
-            tile => TILE_TYPES.indexOf(tile) >= 27
+            tile => tileIndexOf(tile) >= 27
         );
 
     const onlyTerminalNumber =
         nonWildTiles.length > 0 &&
         nonWildTiles.every(tile => {
 
-            const idx = TILE_TYPES.indexOf(tile);
+            const idx = tileIndexOf(tile);
 
             return idx < 27 && (idx % 9 === 0 || idx % 9 === 8);
 
@@ -2180,7 +2362,7 @@ function evaluateStandardDecomposition(
         nonWildTiles.length > 0 &&
         nonWildTiles.every(tile =>
             GREEN_TILE_INDEXES.includes(
-                TILE_TYPES.indexOf(tile)
+                tileIndexOf(tile)
             )
         );
 
@@ -2216,7 +2398,7 @@ function evaluateStandardDecomposition(
         fullMelds.filter(
             meld =>
                 meld.type === "triplet" &&
-                DRAGONS.includes(TILE_TYPES.indexOf(meld.tile))
+                DRAGONS.includes(tileIndexOf(meld.tile))
         );
 
     if (dragonTriplets.length === 3) {
@@ -2241,7 +2423,7 @@ function evaluateStandardDecomposition(
         fullMelds.filter(
             meld =>
                 meld.type === "triplet" &&
-                WINDS.includes(TILE_TYPES.indexOf(meld.tile))
+                WINDS.includes(tileIndexOf(meld.tile))
         );
 
     if (windTriplets.length === 4) {
@@ -2266,7 +2448,7 @@ function evaluateStandardDecomposition(
         .filter(meld => meld.type === "triplet")
         .forEach(meld => {
 
-            const idx = TILE_TYPES.indexOf(meld.tile);
+            const idx = tileIndexOf(meld.tile);
 
             if (DRAGONS.includes(idx)) {
 
@@ -2355,7 +2537,7 @@ function evaluateStandardDecomposition(
     const allSimple =
         nonWildTiles.every(tile => {
 
-            const idx = TILE_TYPES.indexOf(tile);
+            const idx = tileIndexOf(tile);
 
             return idx < 27 && idx % 9 !== 0 && idx % 9 !== 8;
 
@@ -2375,8 +2557,8 @@ function evaluateStandardDecomposition(
     const numberSuits =
         new Set(
             nonWildTiles
-                .filter(tile => TILE_TYPES.indexOf(tile) < 27)
-                .map(tile => Math.floor(TILE_TYPES.indexOf(tile) / 9))
+                .filter(tile => tileIndexOf(tile) < 27)
+                .map(tile => Math.floor(tileIndexOf(tile) / 9))
         );
 
     if (!onlyHonor && numberSuits.size <= 1) {
@@ -2404,7 +2586,7 @@ function evaluateStandardDecomposition(
         .filter(meld => meld.type === "sequence")
         .forEach(meld => {
 
-            const idx = TILE_TYPES.indexOf(meld.tile);
+            const idx = tileIndexOf(meld.tile);
 
             const suit = Math.floor(idx / 9);
 
@@ -2440,7 +2622,7 @@ function evaluateStandardDecomposition(
         .filter(meld => meld.type === "sequence")
         .forEach(meld => {
 
-            const idx = TILE_TYPES.indexOf(meld.tile);
+            const idx = tileIndexOf(meld.tile);
 
             const suit = Math.floor(idx / 9);
 
@@ -2475,13 +2657,13 @@ function evaluateStandardDecomposition(
 
             if (meld.type === "triplet") {
 
-                const idx = TILE_TYPES.indexOf(meld.tile);
+                const idx = tileIndexOf(meld.tile);
 
                 return idx >= 27 || idx % 9 === 0 || idx % 9 === 8;
 
             }
 
-            const idx = TILE_TYPES.indexOf(meld.tile);
+            const idx = tileIndexOf(meld.tile);
 
             const num = idx % 9;
 
@@ -2580,6 +2762,8 @@ function evaluateStandardDecomposition(
 
     addDoraYaku(yakuList, allTiles, doraTiles);
 
+    addRedFiveYaku(yakuList, rawHand);
+
 
     /*
         도라 외에 역이 하나도 없으면 화료 불가
@@ -2608,8 +2792,10 @@ function countTiles(hand) {
 
     hand.forEach(tile => {
 
-        counts[tile] =
-            (counts[tile] || 0) + 1;
+        const key = baseTile(tile);
+
+        counts[key] =
+            (counts[key] || 0) + 1;
 
     });
 
@@ -2680,7 +2866,7 @@ function sortHand(hand) {
 function getTileOrder(tile) {
 
     const index =
-        TILE_TYPES.indexOf(tile);
+        tileIndexOf(tile);
 
 
     if (index === -1) {
@@ -2755,12 +2941,32 @@ function renderHand() {
 
             if (
                 activeDoraTiles.includes(
-                    tile
+                    baseTile(tile)
                 )
             ) {
 
                 button.classList.add(
                     "dora-highlight"
+                );
+
+            }
+
+
+            const suitClass =
+                getSuitClass(tile);
+
+            if (suitClass) {
+
+                button.classList.add(
+                    suitClass
+                );
+
+            }
+
+            if (isRedFive(tile)) {
+
+                button.classList.add(
+                    "tile-red-five"
                 );
 
             }
@@ -2836,12 +3042,32 @@ function renderDrawnTile() {
 
     if (
         activeDoraTiles.includes(
-            drawnTile
+            baseTile(drawnTile)
         )
     ) {
 
         tile.classList.add(
             "dora-highlight"
+        );
+
+    }
+
+
+    const drawnSuitClass =
+        getSuitClass(drawnTile);
+
+    if (drawnSuitClass) {
+
+        tile.classList.add(
+            drawnSuitClass
+        );
+
+    }
+
+    if (isRedFive(drawnTile)) {
+
+        tile.classList.add(
+            "tile-red-five"
         );
 
     }
@@ -2896,8 +3122,30 @@ function renderDora() {
             i < doraIndicators.length
         ) {
 
+            const indicatorTile =
+                doraIndicators[i];
+
             element.innerHTML =
-                `<span>${doraIndicators[i]}</span>`;
+                `<span>${indicatorTile}</span>`;
+
+            const indicatorSuitClass =
+                getSuitClass(indicatorTile);
+
+            if (indicatorSuitClass) {
+
+                element.classList.add(
+                    indicatorSuitClass
+                );
+
+            }
+
+            if (isRedFive(indicatorTile)) {
+
+                element.classList.add(
+                    "tile-red-five"
+                );
+
+            }
 
         }
 
@@ -3136,6 +3384,25 @@ function renderDiscardHistory() {
             "tile"
         );
 
+        const suitClass =
+            getSuitClass(tile);
+
+        if (suitClass) {
+
+            tileElement.classList.add(
+                suitClass
+            );
+
+        }
+
+        if (isRedFive(tile)) {
+
+            tileElement.classList.add(
+                "tile-red-five"
+            );
+
+        }
+
         tileElement.innerHTML =
             `<span>${tile}</span>`;
 
@@ -3261,6 +3528,18 @@ function renderKanMelds() {
                     "tile",
                     "kan-tile"
                 );
+
+
+                const kanSuitClass =
+                    getSuitClass(kanTile);
+
+                if (kanSuitClass) {
+
+                    tile.classList.add(
+                        kanSuitClass
+                    );
+
+                }
 
 
                 tile.innerHTML =
