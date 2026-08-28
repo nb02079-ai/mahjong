@@ -181,6 +181,16 @@ let discardedTiles = [];
 
 let redFivesInKan = 0;
 
+/*
+    애니메이션 트리거 판단용
+    (매 렌더링마다 재생되지 않도록,
+     "새로 생긴 것"만 구분하기 위한 상태)
+*/
+
+let lastDoraRenderCount = 0;
+let lastKanMeldRenderCount = 0;
+let lastRenderedScore = 0;
+
 
 /*
     타이밍 역 판정용 플래그
@@ -306,6 +316,12 @@ function startGame() {
     discardedTiles = [];
 
     redFivesInKan = 0;
+
+    lastDoraRenderCount = 0;
+
+    lastKanMeldRenderCount = 0;
+
+    lastRenderedScore = 0;
 
     doraIndicators = [];
 
@@ -3021,7 +3037,8 @@ function renderDrawnTile() {
 
     tile.classList.add(
         "tile",
-        "drawn"
+        "drawn",
+        "tile-pop-in"
     );
 
 
@@ -3100,6 +3117,17 @@ function renderDora() {
         "";
 
 
+    /*
+        새로 공개된 도라 표시패 하나에만
+        등장 애니메이션을 적용한다.
+    */
+
+    const newlyRevealedIndex =
+        doraIndicators.length > lastDoraRenderCount
+            ? lastDoraRenderCount
+            : -1;
+
+
     for (
         let i = 0;
         i < DEAD_WALL_SIZE;
@@ -3147,6 +3175,14 @@ function renderDora() {
 
             }
 
+            if (i === newlyRevealedIndex) {
+
+                element.classList.add(
+                    "tile-pop-in"
+                );
+
+            }
+
         }
 
         else {
@@ -3165,6 +3201,10 @@ function renderDora() {
     }
 
 
+    lastDoraRenderCount =
+        doraIndicators.length;
+
+
     doraCountElement.textContent =
         `${doraIndicators.length} / ${DEAD_WALL_SIZE}`;
 
@@ -3179,6 +3219,32 @@ function renderInfo() {
 
     scoreElement.textContent =
         score.toLocaleString();
+
+
+    if (score !== lastRenderedScore) {
+
+        scoreElement.classList.remove(
+            "score-flash"
+        );
+
+
+        /*
+            클래스를 뗐다가 다시 붙일 때
+            리플로우를 강제해서
+            애니메이션이 매번 새로 재생되게 한다.
+        */
+
+        void scoreElement.offsetWidth;
+
+
+        scoreElement.classList.add(
+            "score-flash"
+        );
+
+
+        lastRenderedScore = score;
+
+    }
 
 
     turnsLeftElement.textContent =
@@ -3498,8 +3564,17 @@ function renderKanMelds() {
     kanMeldsElement.innerHTML = "";
 
 
+    /*
+        가장 마지막(가장 최근에 선언된) 깡만
+        이번 렌더링에서 새로 생긴 것인지 확인한다.
+    */
+
+    const isNewKanJustAdded =
+        kanMelds.length > lastKanMeldRenderCount;
+
+
     kanMelds.forEach(
-        kanTile => {
+        (kanTile, meldIndex) => {
 
             const meld =
                 document.createElement(
@@ -3510,6 +3585,18 @@ function renderKanMelds() {
             meld.classList.add(
                 "kan-meld"
             );
+
+
+            if (
+                isNewKanJustAdded &&
+                meldIndex === kanMelds.length - 1
+            ) {
+
+                meld.classList.add(
+                    "tile-pop-in"
+                );
+
+            }
 
 
             for (
@@ -3559,6 +3646,10 @@ function renderKanMelds() {
 
         }
     );
+
+
+    lastKanMeldRenderCount =
+        kanMelds.length;
 
 }
 
