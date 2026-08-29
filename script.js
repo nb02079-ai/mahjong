@@ -438,14 +438,180 @@ function setSoundEnabled(enabled) {
 /* =========================================================
    배경음악(BGM)
 
-   외부 음원 없이, 저음역대 화음 3개를 계속 울리고
-   아주 느린 LFO로 음량을 은은하게 오르내리게 해서
-   "숨쉬는" 듯한 잔잔한 배경음을 만든다.
+   외부 음원 없이, 드뷔시 "달빛(Clair de Lune)" 도입부의
+   유명한 선율을 8비트 게임음악 느낌(트라이앵글파,
+   계단식으로 딱딱 끊어지는 음표)으로 편곡해서 계속 반복한다.
+
+   정확한 악보 전사가 아니라 기억에 의존한 근사치이며,
+   Db장조 선율을 그대로 살리되 잔잔하게 들리도록
+   느린 템포로 재생한다. 원곡은 1905년作으로 저작권이
+   만료된 퍼블릭 도메인이다.
 ========================================================= */
+
+const CLAIR_DE_LUNE_MELODY = [
+    { freq: 415.30, dur: 0.7 },
+    { freq: 554.37, dur: 0.7 },
+    { freq: 622.25, dur: 0.7 },
+    { freq: 698.46, dur: 1.0 },
+    { freq: 622.25, dur: 0.7 },
+    { freq: 554.37, dur: 0.7 },
+    { freq: 466.16, dur: 0.7 },
+    { freq: 415.30, dur: 1.4 },
+    { freq: 369.99, dur: 0.7 },
+    { freq: 415.30, dur: 0.7 },
+    { freq: 466.16, dur: 0.7 },
+    { freq: 554.37, dur: 1.8 }
+];
+
+const BGM_BASS_FREQ = 138.59;
 
 let bgmNodes = null;
 
 let bgmShouldPlay = false;
+
+let bgmLoopTimeoutId = null;
+
+let bgmActiveOscillators = [];
+
+
+function scheduleClairDeLuneLoop() {
+
+    if (!soundEnabled || !bgmShouldPlay) {
+
+        return;
+
+    }
+
+    try {
+
+        const ctx = getAudioContext();
+
+        if (!ctx) {
+
+            return;
+
+        }
+
+        bgmActiveOscillators = [];
+
+        const melodyGain =
+            ctx.createGain();
+
+        melodyGain.gain.value = 0.05;
+
+        melodyGain.connect(
+            ctx.destination
+        );
+
+        const startTime =
+            ctx.currentTime + 0.05;
+
+        let offset = 0;
+
+        CLAIR_DE_LUNE_MELODY.forEach(note => {
+
+            const osc =
+                ctx.createOscillator();
+
+            osc.type = "triangle";
+
+            osc.frequency.value = note.freq;
+
+            const noteGain =
+                ctx.createGain();
+
+            const noteStart =
+                startTime + offset;
+
+            const noteEnd =
+                noteStart + note.dur;
+
+            noteGain.gain.setValueAtTime(
+                0,
+                noteStart
+            );
+
+            noteGain.gain.linearRampToValueAtTime(
+                1,
+                noteStart + 0.02
+            );
+
+            noteGain.gain.setValueAtTime(
+                1,
+                noteEnd - 0.08
+            );
+
+            noteGain.gain.linearRampToValueAtTime(
+                0,
+                noteEnd - 0.01
+            );
+
+            osc.connect(noteGain);
+
+            noteGain.connect(melodyGain);
+
+            osc.start(noteStart);
+
+            osc.stop(noteEnd + 0.02);
+
+            bgmActiveOscillators.push(osc);
+
+            offset += note.dur;
+
+        });
+
+
+        /*
+            아주 낮은 음으로 은은하게 화성을 받쳐주는
+            지속음 (Db3)
+        */
+
+        const bassOsc =
+            ctx.createOscillator();
+
+        bassOsc.type = "sine";
+
+        bassOsc.frequency.value =
+            BGM_BASS_FREQ;
+
+        const bassGain =
+            ctx.createGain();
+
+        bassGain.gain.value = 0.02;
+
+        bassOsc.connect(bassGain);
+
+        bassGain.connect(ctx.destination);
+
+        bassOsc.start(startTime);
+
+        bassOsc.stop(startTime + offset + 0.05);
+
+        bgmActiveOscillators.push(bassOsc);
+
+
+        bgmNodes = {
+            melodyGain,
+            bassGain
+        };
+
+        bgmLoopTimeoutId =
+            setTimeout(() => {
+
+                scheduleClairDeLuneLoop();
+
+            }, offset * 1000);
+
+    } catch (error) {
+
+        console.error(
+            "배경음악 재생에 실패했습니다.",
+            error
+        );
+
+    }
+
+}
 
 
 function startBackgroundMusic() {
@@ -464,127 +630,26 @@ function startBackgroundMusic() {
 
     }
 
-    try {
-
-        const ctx = getAudioContext();
-
-        if (!ctx) {
-
-            return;
-
-        }
-
-        const masterGain =
-            ctx.createGain();
-
-        masterGain.gain.value = 0.045;
-
-        masterGain.connect(
-            ctx.destination
-        );
-
-
-        /*
-            중음역대 3화음 (C4 - E4 - G4)을 사용한다.
-
-            원래 저음역대(C3-G3)로 만들었더니 휴대폰
-            스피커에서 제대로 재생이 안 되고 부르르
-            떨리는 버즈 소리처럼 들리는 문제가 있어서,
-            스피커가 깨끗하게 재생할 수 있는 중음역대로
-            올리고 각 화음마다 살짝 디튠을 줘서
-            딱딱한 순음 대신 은은하게 퍼지는 느낌으로 바꿨다.
-        */
-
-        const chordFrequencies =
-            [261.63, 329.63, 392.00];
-
-        const oscillators =
-            chordFrequencies.map((freq, index) => {
-
-                const osc =
-                    ctx.createOscillator();
-
-                osc.type = "sine";
-
-                osc.frequency.value = freq;
-
-                osc.detune.value =
-                    (index - 1) * 4;
-
-                const voiceGain =
-                    ctx.createGain();
-
-                voiceGain.gain.value = 0.35;
-
-                osc.connect(voiceGain);
-
-                voiceGain.connect(masterGain);
-
-                osc.start();
-
-                return osc;
-
-            });
-
-
-        /*
-            아주 느린 LFO로 음량을 은은하게
-            오르내리게 해서 "숨쉬는" 느낌을 준다.
-        */
-
-        const lfo =
-            ctx.createOscillator();
-
-        lfo.type = "sine";
-
-        lfo.frequency.value = 0.08;
-
-        const lfoGain =
-            ctx.createGain();
-
-        lfoGain.gain.value = 0.018;
-
-        lfo.connect(lfoGain);
-
-        lfoGain.connect(masterGain.gain);
-
-        lfo.start();
-
-
-        bgmNodes = {
-            oscillators,
-            masterGain,
-            lfo,
-            lfoGain
-        };
-
-    } catch (error) {
-
-        console.error(
-            "배경음악 재생에 실패했습니다.",
-            error
-        );
-
-    }
+    scheduleClairDeLuneLoop();
 
 }
 
 
 function stopBackgroundMusicNodes() {
 
-    if (!bgmNodes) {
+    if (bgmLoopTimeoutId) {
 
-        return;
+        clearTimeout(bgmLoopTimeoutId);
+
+        bgmLoopTimeoutId = null;
 
     }
 
     try {
 
-        bgmNodes.oscillators.forEach(
+        bgmActiveOscillators.forEach(
             osc => osc.stop()
         );
-
-        bgmNodes.lfo.stop();
 
     } catch (error) {
 
@@ -594,6 +659,8 @@ function stopBackgroundMusicNodes() {
         );
 
     }
+
+    bgmActiveOscillators = [];
 
     bgmNodes = null;
 
