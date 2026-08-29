@@ -186,6 +186,65 @@ const MIN_STAGE_TURNS = 15;
 
 const SOUND_STORAGE_KEY = "soloMahjongSoundEnabled";
 
+const BGM_VOLUME_STORAGE_KEY = "soloMahjongBgmVolume";
+
+const DEFAULT_BGM_VOLUME = 40;
+
+
+function getStoredBgmVolume() {
+
+    try {
+
+        const saved =
+            localStorage.getItem(BGM_VOLUME_STORAGE_KEY);
+
+        if (saved !== null) {
+
+            const parsed = Number(saved);
+
+            if (!isNaN(parsed)) {
+
+                return parsed;
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "배경음악 볼륨 설정을 불러오지 못했습니다.",
+            error
+        );
+
+    }
+
+    return DEFAULT_BGM_VOLUME;
+
+}
+
+
+function setStoredBgmVolume(value) {
+
+    try {
+
+        localStorage.setItem(
+            BGM_VOLUME_STORAGE_KEY,
+            String(value)
+        );
+
+    } catch (error) {
+
+        console.error(
+            "배경음악 볼륨 설정을 저장하지 못했습니다.",
+            error
+        );
+
+    }
+
+}
+
+
 let audioContext = null;
 
 let soundEnabled = true;
@@ -456,7 +515,8 @@ function startBackgroundMusic() {
 
     try {
 
-        bgmAudioElement.volume = 0.4;
+        bgmAudioElement.volume =
+            getStoredBgmVolume() / 100;
 
         const playPromise =
             bgmAudioElement.play();
@@ -1290,6 +1350,9 @@ const soundToggleButton =
 
 const bgmAudioElement =
     document.getElementById("bgm-audio");
+
+const bgmVolumeSlider =
+    document.getElementById("bgm-volume-slider");
 
 const scoreHistoryOverlayElement =
     document.getElementById("score-history-overlay");
@@ -6973,6 +7036,25 @@ soundToggleButton.addEventListener(
 
 
 updateSoundToggleLabel();
+
+
+bgmVolumeSlider.value =
+    getStoredBgmVolume();
+
+bgmVolumeSlider.addEventListener(
+    "input",
+    () => {
+
+        const value =
+            Number(bgmVolumeSlider.value);
+
+        bgmAudioElement.volume =
+            value / 100;
+
+        setStoredBgmVolume(value);
+
+    }
+);
 
 
 closeScoreHistoryButton.addEventListener(

@@ -192,6 +192,37 @@ body {
 }
 
 
+.bgm-volume-control {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    min-height: 44px;
+
+    padding: 0 10px;
+
+    border: 1px solid #3d5747;
+
+    border-radius: 8px;
+
+    background: #1c3128;
+}
+
+.bgm-volume-icon {
+    font-size: 13px;
+}
+
+#bgm-volume-slider {
+    width: 70px;
+
+    accent-color: #d4af37;
+
+    cursor: pointer;
+}
+
+
 /* =========================
    GAME INFO
 ========================= */
