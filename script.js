@@ -74,6 +74,84 @@ const SHOP_ITEMS = [
 ];
 
 /*
+    상점 아이템 카드용 아이콘 (24x24 심플 SVG)
+    currentColor를 써서 카드 CSS에서 색을 입힌다.
+*/
+
+const SHOP_ITEM_ICONS = {
+
+    extraTurns:
+        `<circle cx="12" cy="12" r="9" fill="none" ` +
+        `stroke="currentColor" stroke-width="2"/>` +
+        `<path d="M12 7v5l3.5 2" fill="none" ` +
+        `stroke="currentColor" stroke-width="2" ` +
+        `stroke-linecap="round"/>`,
+
+    extraDoraReveal:
+        `<path d="M12 3 L21 12 L12 21 L3 12 Z" ` +
+        `fill="currentColor"/>`,
+
+    multiplierPurchases:
+        `<path d="M12 2 L14.5 9 L22 9 L16 13.5 ` +
+        `L18 21 L12 16.5 L6 21 L8 13.5 L2 9 L9.5 9 Z" ` +
+        `fill="currentColor"/>`,
+
+    discardTokens:
+        `<path d="M4 12a8 8 0 0 1 14-5.3" fill="none" ` +
+        `stroke="currentColor" stroke-width="2" ` +
+        `stroke-linecap="round"/>` +
+        `<path d="M20 12a8 8 0 0 1-14 5.3" fill="none" ` +
+        `stroke="currentColor" stroke-width="2" ` +
+        `stroke-linecap="round"/>` +
+        `<path d="M18 3v5h-5" fill="none" ` +
+        `stroke="currentColor" stroke-width="2" ` +
+        `stroke-linecap="round" stroke-linejoin="round"/>` +
+        `<path d="M6 21v-5h5" fill="none" ` +
+        `stroke="currentColor" stroke-width="2" ` +
+        `stroke-linecap="round" stroke-linejoin="round"/>`,
+
+    extraRedFive:
+        `<circle cx="12" cy="12" r="9" fill="#c0392b"/>` +
+        `<text x="12" y="16.5" text-anchor="middle" ` +
+        `font-size="12" font-weight="900" fill="#fff">5</text>`,
+
+    mulliganTokens:
+        `<path d="M4.5 15a8 8 0 0 0 14.5 3.5" fill="none" ` +
+        `stroke="currentColor" stroke-width="2" ` +
+        `stroke-linecap="round"/>` +
+        `<path d="M19.5 9a8 8 0 0 0-14.5-3.5" fill="none" ` +
+        `stroke="currentColor" stroke-width="2" ` +
+        `stroke-linecap="round"/>` +
+        `<path d="M4 4v6h6" fill="none" ` +
+        `stroke="currentColor" stroke-width="2" ` +
+        `stroke-linecap="round" stroke-linejoin="round"/>` +
+        `<path d="M20 20v-6h-6" fill="none" ` +
+        `stroke="currentColor" stroke-width="2" ` +
+        `stroke-linecap="round" stroke-linejoin="round"/>`,
+
+    tsumoPeekPurchases:
+        `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" ` +
+        `fill="none" stroke="currentColor" stroke-width="2"/>` +
+        `<circle cx="12" cy="12" r="3" fill="currentColor"/>`
+
+};
+
+
+function buildShopItemIconSVG(itemId) {
+
+    const inner =
+        SHOP_ITEM_ICONS[itemId] || "";
+
+    return (
+        `<svg viewBox="0 0 24 24" ` +
+        `xmlns="http://www.w3.org/2000/svg" ` +
+        `width="100%" height="100%">${inner}</svg>`
+    );
+
+}
+
+
+/*
     상점 랜덤화
 
     매 상점 방문마다 전체 아이템 중 일부만 무작위로 보여주고,
@@ -353,6 +431,155 @@ function setSoundEnabled(enabled) {
         );
 
     }
+
+}
+
+
+/* =========================================================
+   배경음악(BGM)
+
+   외부 음원 없이, 저음역대 화음 3개를 계속 울리고
+   아주 느린 LFO로 음량을 은은하게 오르내리게 해서
+   "숨쉬는" 듯한 잔잔한 배경음을 만든다.
+========================================================= */
+
+let bgmNodes = null;
+
+let bgmShouldPlay = false;
+
+
+function startBackgroundMusic() {
+
+    bgmShouldPlay = true;
+
+    if (!soundEnabled) {
+
+        return;
+
+    }
+
+    if (bgmNodes) {
+
+        return;
+
+    }
+
+    try {
+
+        const ctx = getAudioContext();
+
+        if (!ctx) {
+
+            return;
+
+        }
+
+        const masterGain =
+            ctx.createGain();
+
+        masterGain.gain.value = 0.05;
+
+        masterGain.connect(
+            ctx.destination
+        );
+
+
+        /*
+            낮은 3화음 (C3 - E3 - G3)을
+            계속 울리는 단순한 패드 사운드
+        */
+
+        const chordFrequencies =
+            [130.81, 164.81, 196.00];
+
+        const oscillators =
+            chordFrequencies.map(freq => {
+
+                const osc =
+                    ctx.createOscillator();
+
+                osc.type = "sine";
+
+                osc.frequency.value = freq;
+
+                osc.connect(masterGain);
+
+                osc.start();
+
+                return osc;
+
+            });
+
+
+        /*
+            아주 느린 LFO로 음량을 은은하게
+            오르내리게 해서 "숨쉬는" 느낌을 준다.
+        */
+
+        const lfo =
+            ctx.createOscillator();
+
+        lfo.type = "sine";
+
+        lfo.frequency.value = 0.08;
+
+        const lfoGain =
+            ctx.createGain();
+
+        lfoGain.gain.value = 0.025;
+
+        lfo.connect(lfoGain);
+
+        lfoGain.connect(masterGain.gain);
+
+        lfo.start();
+
+
+        bgmNodes = {
+            oscillators,
+            masterGain,
+            lfo,
+            lfoGain
+        };
+
+    } catch (error) {
+
+        console.error(
+            "배경음악 재생에 실패했습니다.",
+            error
+        );
+
+    }
+
+}
+
+
+function stopBackgroundMusicNodes() {
+
+    if (!bgmNodes) {
+
+        return;
+
+    }
+
+    try {
+
+        bgmNodes.oscillators.forEach(
+            osc => osc.stop()
+        );
+
+        bgmNodes.lfo.stop();
+
+    } catch (error) {
+
+        console.error(
+            "배경음악 정지에 실패했습니다.",
+            error
+        );
+
+    }
+
+    bgmNodes = null;
 
 }
 
@@ -948,6 +1175,20 @@ let stageScoreTotal = 0;
 
 let lastStageResultWasWin = false;
 
+/*
+    방금 끝난 스테이지가 화료로 끝났다면
+    그 역 요약 텍스트 (실패했다면 빈 문자열)
+*/
+
+let lastStageYakuSummary = "";
+
+/*
+    런 결과 화면에서 스테이지별 내역을 보여주기 위한 기록.
+    새 스테이지 모드 런을 시작할 때 초기화된다.
+*/
+
+let stageHistory = [];
+
 function createEmptyStageUpgrades() {
 
     return {
@@ -1178,6 +1419,9 @@ const runSummaryTitleElement =
 
 const runSummaryDetailElement =
     document.getElementById("run-summary-detail");
+
+const runSummaryBreakdownElement =
+    document.getElementById("run-summary-breakdown");
 
 const runSummaryRestartButton =
     document.getElementById("run-summary-restart-button");
@@ -4831,18 +5075,6 @@ function renderDora() {
 
 function getTenpaiWaits() {
 
-    if (drawnTile !== null) {
-
-        return null;
-
-    }
-
-    if (peekCandidates) {
-
-        return null;
-
-    }
-
     const requiredMentsu =
         4 - kanMelds.length;
 
@@ -4916,7 +5148,7 @@ function renderTenpaiWaits() {
         );
 
         notice.textContent =
-            "쯔모 전 손패 기준으로 표시돼요.";
+            "지금 손패 기준으로는 계산할 수 없어요.";
 
         tenpaiWaitsElement.appendChild(
             notice
@@ -5130,6 +5362,8 @@ function endGame(message) {
 
 
     lastStageResultWasWin = false;
+
+    lastStageYakuSummary = "";
 
 
     showResult(
@@ -5462,6 +5696,13 @@ function advanceStageFlow() {
 
     stageScoreTotal += score;
 
+    stageHistory.push({
+        stage: currentStage,
+        score,
+        won: lastStageResultWasWin,
+        yaku: lastStageYakuSummary
+    });
+
     updateStageHud();
 
 
@@ -5593,6 +5834,15 @@ function renderShopItems() {
         card.classList.add("shop-item");
 
 
+        const iconEl =
+            document.createElement("div");
+
+        iconEl.classList.add("shop-item-icon");
+
+        iconEl.innerHTML =
+            buildShopItemIconSVG(item.id);
+
+
         const info =
             document.createElement("div");
 
@@ -5663,6 +5913,8 @@ function renderShopItems() {
             () => buyShopItem(item)
         );
 
+
+        card.appendChild(iconEl);
 
         card.appendChild(info);
 
@@ -5794,6 +6046,25 @@ function showRunSummary(failedEarly) {
     const reachedStage =
         Math.min(currentStage, TOTAL_STAGES);
 
+    const wonStages =
+        stageHistory.filter(entry => entry.won);
+
+    let bestYakuLine = "";
+
+    if (wonStages.length > 0) {
+
+        const best =
+            wonStages.reduce(
+                (a, b) => (b.score > a.score ? b : a)
+            );
+
+        bestYakuLine =
+            `\n이번 런 최고 역: ${best.yaku} ` +
+            `(스테이지 ${best.stage}, ` +
+            `${best.score.toLocaleString()}점)`;
+
+    }
+
     runSummaryDetailElement.textContent =
         (
             failedEarly
@@ -5802,11 +6073,75 @@ function showRunSummary(failedEarly) {
         ) +
         `최종 점수 (1~${reachedStage}스테이지 합): ` +
         `${stageScoreTotal.toLocaleString()}점\n` +
-        `최종 코인: ${coins}`;
+        `최종 코인: ${coins}` +
+        bestYakuLine;
+
+    renderStageBreakdown();
 
     runSummaryOverlayElement.classList.remove(
         "hidden"
     );
+
+}
+
+
+function renderStageBreakdown() {
+
+    runSummaryBreakdownElement.innerHTML =
+        "";
+
+    stageHistory.forEach(entry => {
+
+        const row =
+            document.createElement("div");
+
+        row.classList.add(
+            "stage-breakdown-row"
+        );
+
+
+        const label =
+            document.createElement("span");
+
+        label.classList.add(
+            "stage-breakdown-label"
+        );
+
+        label.textContent =
+            `스테이지 ${entry.stage}`;
+
+
+        const detail =
+            document.createElement("span");
+
+        detail.classList.add(
+            "stage-breakdown-detail"
+        );
+
+        detail.textContent =
+            entry.won
+                ? `화료 (${entry.yaku}) - ` +
+                  `${entry.score.toLocaleString()}점`
+                : "실패 - 0점";
+
+        if (!entry.won) {
+
+            detail.classList.add(
+                "stage-breakdown-fail"
+            );
+
+        }
+
+
+        row.appendChild(label);
+
+        row.appendChild(detail);
+
+        runSummaryBreakdownElement.appendChild(
+            row
+        );
+
+    });
 
 }
 
@@ -6548,6 +6883,8 @@ startGameButton.addEventListener(
 
         playButtonClickSound();
 
+        startBackgroundMusic();
+
         hideStartScreen();
 
         gameMode = "classic";
@@ -6566,6 +6903,8 @@ startStageModeButton.addEventListener(
 
         playButtonClickSound();
 
+        startBackgroundMusic();
+
         hideStartScreen();
 
         gameMode = "stage";
@@ -6577,6 +6916,10 @@ startStageModeButton.addEventListener(
         stageScoreTotal = 0;
 
         lastStageResultWasWin = false;
+
+        lastStageYakuSummary = "";
+
+        stageHistory = [];
 
         stageUpgrades =
             createEmptyStageUpgrades();
@@ -6687,6 +7030,16 @@ soundToggleButton.addEventListener(
         if (soundEnabled) {
 
             playButtonClickSound();
+
+            if (bgmShouldPlay) {
+
+                startBackgroundMusic();
+
+            }
+
+        } else {
+
+            stopBackgroundMusicNodes();
 
         }
 
@@ -6846,6 +7199,8 @@ winButton.addEventListener(
 
 
         lastStageResultWasWin = true;
+
+        lastStageYakuSummary = yakuText;
 
 
         showResult(
