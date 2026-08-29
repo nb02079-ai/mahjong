@@ -176,6 +176,83 @@ const STAGE_DIFFICULTY_TURN_STEP = 3;
 
 const MIN_STAGE_TURNS = 15;
 
+/*
+    스테이지 보너스 미션
+
+    2스테이지부터 매 스테이지 시작 시 하나씩 무작위로
+    배정되는 선택적 목표. 화료할 때 조건을 만족하면
+    보너스 점수가 추가된다. (1스테이지는 배정하지 않음)
+*/
+
+const STAGE_BONUS_MISSIONS = [
+    {
+        id: "hasDora",
+        label: "도라 포함 화료",
+        tier: 1,
+        bonus: 2000,
+        check: (winResult) =>
+            winResult.yakuList.some(
+                yaku => yaku.name.includes("도라")
+            )
+    },
+    {
+        id: "tanyao",
+        label: "탕야오로 화료",
+        tier: 2,
+        bonus: 3000,
+        check: (winResult) =>
+            winResult.yakuList.some(
+                yaku => yaku.name === "탕야오"
+            )
+    },
+    {
+        id: "pinfu",
+        label: "핑후로 화료",
+        tier: 2,
+        bonus: 3000,
+        check: (winResult) =>
+            winResult.yakuList.some(
+                yaku => yaku.name === "핑후"
+            )
+    },
+    {
+        id: "usedKan",
+        label: "깡 사용 화료",
+        tier: 3,
+        bonus: 4000,
+        check: (winResult, context) =>
+            context.kanCount > 0
+    },
+    {
+        id: "speedWin",
+        label: "10번째 쯔모 이내 화료",
+        tier: 3,
+        bonus: 4000,
+        check: (winResult, context) =>
+            context.turnCount <= 10
+    },
+    {
+        id: "bigHand",
+        label: "만관급(5판) 이상으로 화료",
+        tier: 4,
+        bonus: 5000,
+        check: (winResult) =>
+            winResult.isYakuman ||
+            (
+                typeof winResult.han === "number" &&
+                winResult.han >= 5
+            )
+    }
+];
+
+function getMissionTierStars(tier) {
+
+    return "★".repeat(tier) + "☆".repeat(4 - tier);
+
+}
+
+let currentStageMission = null;
+
 
 /* =========================================================
    1.5 사운드 이펙트
@@ -1270,6 +1347,12 @@ const tenpaiCountElement =
 const gameStatusElement =
     document.getElementById("game-status");
 
+const stageMissionBannerElement =
+    document.getElementById("stage-mission-banner");
+
+const stageMissionTextElement =
+    document.getElementById("stage-mission-text");
+
 const handCountElement =
     document.getElementById("hand-count");
 
@@ -1513,8 +1596,23 @@ function startGame() {
             stageUpgrades.extraRedFive;
 
 
+        currentStageMission =
+            currentStage >= 2
+                ? STAGE_BONUS_MISSIONS[
+                    Math.floor(
+                        Math.random() *
+                        STAGE_BONUS_MISSIONS.length
+                    )
+                  ]
+                : null;
+
+
         stageUpgrades =
             createEmptyStageUpgrades();
+
+    } else {
+
+        currentStageMission = null;
 
     }
 
@@ -5668,6 +5766,24 @@ function updateStageHud() {
 
     }
 
+
+    const hasMission =
+        isStageMode && currentStageMission !== null;
+
+    stageMissionBannerElement.classList.toggle(
+        "hidden",
+        !hasMission
+    );
+
+    if (hasMission) {
+
+        stageMissionTextElement.textContent =
+            `보너스 미션: ${currentStageMission.label} ` +
+            `${getMissionTierStars(currentStageMission.tier)} ` +
+            `(+${currentStageMission.bonus.toLocaleString()}점)`;
+
+    }
+
 }
 
 
@@ -7171,10 +7287,32 @@ winButton.addEventListener(
         );
 
 
+        let missionBonus = 0;
+
+        let missionBonusText = "";
+
+        if (
+            currentStageMission &&
+            currentStageMission.check(
+                winResult,
+                { kanCount, turnCount }
+            )
+        ) {
+
+            missionBonus =
+                currentStageMission.bonus;
+
+            missionBonusText =
+                ` + 미션 달성("${currentStageMission.label}") ` +
+                `+${missionBonus.toLocaleString()}점`;
+
+        }
+
+
         const finalWinScore =
             Math.round(
                 winResult.score * stageScoreMultiplier
-            );
+            ) + missionBonus;
 
         score += finalWinScore;
 
@@ -7198,7 +7336,8 @@ winButton.addEventListener(
                 stageScoreMultiplier > 1
                     ? ` (배율 x${stageScoreMultiplier})`
                     : ""
-            )
+            ) +
+            missionBonusText
         );
 
 
