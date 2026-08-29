@@ -26,52 +26,77 @@ const SHOP_ITEMS = [
         id: "extraTurns",
         name: "턴 수 증가권",
         desc: "다음 스테이지 제한 턴 +10",
-        cost: 3,
+        cost: 2,
         maxPurchase: Infinity
     },
     {
         id: "extraDoraReveal",
         name: "시작 도라 추가 공개권",
         desc: "다음 스테이지 시작 시 도라 표시패 1장 추가 공개",
-        cost: 4,
+        cost: 3,
         maxPurchase: 3
     },
     {
         id: "multiplierPurchases",
         name: "점수 배율 부적",
         desc: "다음 스테이지 화료 점수 +50%",
-        cost: 5,
+        cost: 3,
         maxPurchase: 3
     },
     {
         id: "discardTokens",
         name: "버림패 회수권",
-        desc: "다음 스테이지에서 쯔모 대신 버림패 하나를 가져올 수 있음 (1회당 1장)",
-        cost: 3,
+        desc: "쯔모 대신 버림패 하나를 가져올 수 있음 (1회당 1장, 안 쓰면 다음 스테이지로 이월)",
+        cost: 2,
         maxPurchase: Infinity
     },
     {
         id: "extraRedFive",
         name: "적도라 추가권",
         desc: "다음 스테이지에 적도라 1장 추가 (수패 한 종류당 최대 2장까지)",
-        cost: 2,
+        cost: 1,
         maxPurchase: 3
     },
     {
         id: "mulliganTokens",
         name: "시작패 멀리건권",
-        desc: "다음 스테이지 시작 시, 첫 타패 전이라면 배패를 다시 뽑을 수 있음",
-        cost: 6,
+        desc: "스테이지 시작 시, 첫 타패 전이라면 배패를 다시 뽑을 수 있음 (최대 3장 보유, 안 쓰면 다음 스테이지로 이월)",
+        cost: 4,
         maxPurchase: 3
     },
     {
         id: "tsumoPeekPurchases",
         name: "쯔모 투시권",
-        desc: "다음 스테이지에서 3번의 쯔모 동안 패산에서 2장을 보고 하나를 골라 가져올 수 있음 (1회 구매 = 3회 사용)",
-        cost: 7,
-        maxPurchase: 2
+        desc: "패산에서 2장을 보고 하나를 골라 가져올 수 있음 (1회 구매 = 3회 사용, 안 쓰면 다음 스테이지로 이월)",
+        cost: 5,
+        maxPurchase: Infinity
     }
 ];
+
+/*
+    상점 랜덤화
+
+    매 상점 방문마다 전체 아이템 중 일부만 무작위로 보여주고,
+    코인을 내면 다시 무작위로 뽑을 수 있게 한다.
+*/
+
+const SHOP_OFFER_SIZE = 4;
+
+const SHOP_REROLL_COST = 2;
+
+let shopOfferedItemIds = [];
+
+
+/*
+    스테이지별 난이도 곡선
+
+    스테이지가 올라갈수록 제한 턴이 조금씩 줄어든다.
+    (상점에서 산 턴 수 증가권으로 다시 늘릴 수 있음)
+*/
+
+const STAGE_DIFFICULTY_TURN_STEP = 3;
+
+const MIN_STAGE_TURNS = 15;
 
 
 /* =========================================================
@@ -929,10 +954,7 @@ function createEmptyStageUpgrades() {
         extraTurns: 0,
         extraDoraReveal: 0,
         multiplierPurchases: 0,
-        discardTokens: 0,
-        extraRedFive: 0,
-        mulliganTokens: 0,
-        tsumoPeekPurchases: 0
+        extraRedFive: 0
     };
 
 }
@@ -1145,6 +1167,9 @@ const shopItemsElement =
 const shopNextStageButton =
     document.getElementById("shop-next-stage-button");
 
+const rerollShopButton =
+    document.getElementById("reroll-shop-button");
+
 const runSummaryOverlayElement =
     document.getElementById("run-summary-overlay");
 
@@ -1210,6 +1235,10 @@ function startGame() {
 
         전부 "다음 스테이지 1회용" 소모성이므로
         여기서 값을 읽어 반영한 뒤 즉시 초기화한다.
+
+        (단, 멀리건권/회수권/투시권은 예외 - 사용하지 않으면
+         다음 스테이지로 그대로 이어지는 "보유 토큰"이라
+         여기서 초기화하지 않는다)
     */
 
     MAX_TURNS = BASE_MAX_TURNS;
@@ -1218,13 +1247,7 @@ function startGame() {
 
     stageScoreMultiplier = 1;
 
-    discardRetrieveTokensRemaining = 0;
-
     extraRedFiveCount = 0;
-
-    mulliganTokensRemaining = 0;
-
-    tsumoPeekTokensRemaining = 0;
 
     discardRetrieveArmed = false;
 
@@ -1234,9 +1257,16 @@ function startGame() {
 
     if (gameMode === "stage") {
 
+        const stageDifficultyPenalty =
+            (currentStage - 1) * STAGE_DIFFICULTY_TURN_STEP;
+
         MAX_TURNS =
-            BASE_MAX_TURNS +
-            stageUpgrades.extraTurns * 10;
+            Math.max(
+                MIN_STAGE_TURNS,
+                BASE_MAX_TURNS -
+                stageDifficultyPenalty +
+                stageUpgrades.extraTurns * 10
+            );
 
         initialDoraRevealCount =
             Math.min(
@@ -1247,17 +1277,8 @@ function startGame() {
         stageScoreMultiplier =
             1 + 0.5 * stageUpgrades.multiplierPurchases;
 
-        discardRetrieveTokensRemaining =
-            stageUpgrades.discardTokens;
-
         extraRedFiveCount =
             stageUpgrades.extraRedFive;
-
-        mulliganTokensRemaining =
-            stageUpgrades.mulliganTokens;
-
-        tsumoPeekTokensRemaining =
-            stageUpgrades.tsumoPeekPurchases * 3;
 
 
         stageUpgrades =
@@ -5474,18 +5495,54 @@ function advanceStageFlow() {
    상점
 ========================================================= */
 
-function getShopSummaryText() {
+function getNextStageTurnsPreview() {
 
-    return (
-        `이번 스테이지 점수 ${score.toLocaleString()}점 ` +
-        `→ 코인 +${lastStageCoinsEarned}\n` +
-        `보유 코인: ${coins}`
+    const nextStage =
+        currentStage + 1;
+
+    const difficultyPenalty =
+        (nextStage - 1) * STAGE_DIFFICULTY_TURN_STEP;
+
+    return Math.max(
+        MIN_STAGE_TURNS,
+        BASE_MAX_TURNS -
+        difficultyPenalty +
+        stageUpgrades.extraTurns * 10
     );
 
 }
 
 
+function getShopSummaryText() {
+
+    return (
+        `이번 스테이지 점수 ${score.toLocaleString()}점 ` +
+        `→ 코인 +${lastStageCoinsEarned}\n` +
+        `보유 코인: ${coins}\n` +
+        `다음 스테이지(${currentStage + 1}) 제한 턴: ` +
+        `${getNextStageTurnsPreview()}`
+    );
+
+}
+
+
+function rollShopOffers() {
+
+    const shuffled = [...SHOP_ITEMS];
+
+    shuffle(shuffled);
+
+    shopOfferedItemIds =
+        shuffled
+            .slice(0, SHOP_OFFER_SIZE)
+            .map(item => item.id);
+
+}
+
+
 function showShop() {
+
+    rollShopOffers();
 
     shopTitleElement.textContent =
         `스테이지 ${currentStage} 클리어!`;
@@ -5515,10 +5572,20 @@ function renderShopItems() {
 
     shopItemsElement.innerHTML = "";
 
-    SHOP_ITEMS.forEach(item => {
+    const offeredItems =
+        SHOP_ITEMS.filter(item =>
+            shopOfferedItemIds.includes(item.id)
+        );
+
+    offeredItems.forEach(item => {
+
+        const isPersistent =
+            PERSISTENT_TOKEN_ITEM_IDS.includes(item.id);
 
         const owned =
-            stageUpgrades[item.id];
+            isPersistent
+                ? getPersistentTokenCount(item.id)
+                : stageUpgrades[item.id];
 
         const card =
             document.createElement("div");
@@ -5563,7 +5630,12 @@ function renderShopItems() {
             );
 
             ownedEl.textContent =
-                `이번에 구매: ${owned}개`;
+                isPersistent
+                    ? `보유: ${owned}` +
+                      (item.id === "tsumoPeekPurchases"
+                          ? "회 사용분"
+                          : "개")
+                    : `이번에 구매: ${owned}개`;
 
             info.appendChild(ownedEl);
 
@@ -5600,6 +5672,61 @@ function renderShopItems() {
 
     });
 
+
+    rerollShopButton.textContent =
+        `🎲 다시 뽑기 (${SHOP_REROLL_COST} 코인)`;
+
+    rerollShopButton.disabled =
+        coins < SHOP_REROLL_COST;
+
+}
+
+
+const PERSISTENT_TOKEN_ITEM_IDS =
+    ["discardTokens", "mulliganTokens", "tsumoPeekPurchases"];
+
+
+function getPersistentTokenCount(itemId) {
+
+    if (itemId === "discardTokens") {
+
+        return discardRetrieveTokensRemaining;
+
+    }
+
+    if (itemId === "mulliganTokens") {
+
+        return mulliganTokensRemaining;
+
+    }
+
+    if (itemId === "tsumoPeekPurchases") {
+
+        return tsumoPeekTokensRemaining;
+
+    }
+
+    return 0;
+
+}
+
+
+function addPersistentTokens(itemId) {
+
+    if (itemId === "discardTokens") {
+
+        discardRetrieveTokensRemaining += 1;
+
+    } else if (itemId === "mulliganTokens") {
+
+        mulliganTokensRemaining += 1;
+
+    } else if (itemId === "tsumoPeekPurchases") {
+
+        tsumoPeekTokensRemaining += 3;
+
+    }
+
 }
 
 
@@ -5611,10 +5738,15 @@ function buyShopItem(item) {
 
     }
 
-    if (
-        stageUpgrades[item.id] >=
-        item.maxPurchase
-    ) {
+    const isPersistent =
+        PERSISTENT_TOKEN_ITEM_IDS.includes(item.id);
+
+    const currentlyOwned =
+        isPersistent
+            ? getPersistentTokenCount(item.id)
+            : stageUpgrades[item.id];
+
+    if (currentlyOwned >= item.maxPurchase) {
 
         return;
 
@@ -5622,7 +5754,15 @@ function buyShopItem(item) {
 
     coins -= item.cost;
 
-    stageUpgrades[item.id] += 1;
+    if (isPersistent) {
+
+        addPersistentTokens(item.id);
+
+    } else {
+
+        stageUpgrades[item.id] += 1;
+
+    }
 
     playButtonClickSound();
 
@@ -6441,6 +6581,12 @@ startStageModeButton.addEventListener(
         stageUpgrades =
             createEmptyStageUpgrades();
 
+        discardRetrieveTokensRemaining = 0;
+
+        mulliganTokensRemaining = 0;
+
+        tsumoPeekTokensRemaining = 0;
+
         updateStageHud();
 
         startGame();
@@ -6458,6 +6604,33 @@ shopNextStageButton.addEventListener(
         currentStage += 1;
 
         startGame();
+
+    }
+);
+
+
+rerollShopButton.addEventListener(
+    "click",
+    () => {
+
+        if (coins < SHOP_REROLL_COST) {
+
+            return;
+
+        }
+
+        coins -= SHOP_REROLL_COST;
+
+        playButtonClickSound();
+
+        rollShopOffers();
+
+        updateStageHud();
+
+        shopSummaryElement.textContent =
+            getShopSummaryText();
+
+        renderShopItems();
 
     }
 );
