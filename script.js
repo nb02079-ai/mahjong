@@ -477,7 +477,7 @@ function startBackgroundMusic() {
         const masterGain =
             ctx.createGain();
 
-        masterGain.gain.value = 0.05;
+        masterGain.gain.value = 0.045;
 
         masterGain.connect(
             ctx.destination
@@ -485,15 +485,21 @@ function startBackgroundMusic() {
 
 
         /*
-            낮은 3화음 (C3 - E3 - G3)을
-            계속 울리는 단순한 패드 사운드
+            중음역대 3화음 (C4 - E4 - G4)을 사용한다.
+
+            원래 저음역대(C3-G3)로 만들었더니 휴대폰
+            스피커에서 제대로 재생이 안 되고 부르르
+            떨리는 버즈 소리처럼 들리는 문제가 있어서,
+            스피커가 깨끗하게 재생할 수 있는 중음역대로
+            올리고 각 화음마다 살짝 디튠을 줘서
+            딱딱한 순음 대신 은은하게 퍼지는 느낌으로 바꿨다.
         */
 
         const chordFrequencies =
-            [130.81, 164.81, 196.00];
+            [261.63, 329.63, 392.00];
 
         const oscillators =
-            chordFrequencies.map(freq => {
+            chordFrequencies.map((freq, index) => {
 
                 const osc =
                     ctx.createOscillator();
@@ -502,7 +508,17 @@ function startBackgroundMusic() {
 
                 osc.frequency.value = freq;
 
-                osc.connect(masterGain);
+                osc.detune.value =
+                    (index - 1) * 4;
+
+                const voiceGain =
+                    ctx.createGain();
+
+                voiceGain.gain.value = 0.35;
+
+                osc.connect(voiceGain);
+
+                voiceGain.connect(masterGain);
 
                 osc.start();
 
@@ -526,7 +542,7 @@ function startBackgroundMusic() {
         const lfoGain =
             ctx.createGain();
 
-        lfoGain.gain.value = 0.025;
+        lfoGain.gain.value = 0.018;
 
         lfo.connect(lfoGain);
 
