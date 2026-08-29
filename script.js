@@ -434,49 +434,21 @@ function setSoundEnabled(enabled) {
 
 }
 
-
 /* =========================================================
    배경음악(BGM)
 
-   외부 음원 없이, 드뷔시 "달빛(Clair de Lune)" 도입부의
-   유명한 선율을 8비트 게임음악 느낌(트라이앵글파,
-   계단식으로 딱딱 끊어지는 음표)으로 편곡해서 계속 반복한다.
-
-   정확한 악보 전사가 아니라 기억에 의존한 근사치이며,
-   Db장조 선율을 그대로 살리되 잔잔하게 들리도록
-   느린 템포로 재생한다. 원곡은 1905년作으로 저작권이
-   만료된 퍼블릭 도메인이다.
+   드뷔시 "달빛(Clair de Lune)" 실제 음원을
+   <audio> 엘리먼트로 재생한다. (사용자가 직접 업로드한 파일)
 ========================================================= */
-
-const CLAIR_DE_LUNE_MELODY = [
-    { freq: 415.30, dur: 0.7 },
-    { freq: 554.37, dur: 0.7 },
-    { freq: 622.25, dur: 0.7 },
-    { freq: 698.46, dur: 1.0 },
-    { freq: 622.25, dur: 0.7 },
-    { freq: 554.37, dur: 0.7 },
-    { freq: 466.16, dur: 0.7 },
-    { freq: 415.30, dur: 1.4 },
-    { freq: 369.99, dur: 0.7 },
-    { freq: 415.30, dur: 0.7 },
-    { freq: 466.16, dur: 0.7 },
-    { freq: 554.37, dur: 1.8 }
-];
-
-const BGM_BASS_FREQ = 138.59;
-
-let bgmNodes = null;
 
 let bgmShouldPlay = false;
 
-let bgmLoopTimeoutId = null;
 
-let bgmActiveOscillators = [];
+function startBackgroundMusic() {
 
+    bgmShouldPlay = true;
 
-function scheduleClairDeLuneLoop() {
-
-    if (!soundEnabled || !bgmShouldPlay) {
+    if (!soundEnabled) {
 
         return;
 
@@ -484,123 +456,23 @@ function scheduleClairDeLuneLoop() {
 
     try {
 
-        const ctx = getAudioContext();
+        bgmAudioElement.volume = 0.4;
 
-        if (!ctx) {
+        const playPromise =
+            bgmAudioElement.play();
 
-            return;
+        if (playPromise && playPromise.catch) {
+
+            playPromise.catch(error => {
+
+                console.error(
+                    "배경음악 재생에 실패했습니다.",
+                    error
+                );
+
+            });
 
         }
-
-        bgmActiveOscillators = [];
-
-        const melodyGain =
-            ctx.createGain();
-
-        melodyGain.gain.value = 0.05;
-
-        melodyGain.connect(
-            ctx.destination
-        );
-
-        const startTime =
-            ctx.currentTime + 0.05;
-
-        let offset = 0;
-
-        CLAIR_DE_LUNE_MELODY.forEach(note => {
-
-            const osc =
-                ctx.createOscillator();
-
-            osc.type = "triangle";
-
-            osc.frequency.value = note.freq;
-
-            const noteGain =
-                ctx.createGain();
-
-            const noteStart =
-                startTime + offset;
-
-            const noteEnd =
-                noteStart + note.dur;
-
-            noteGain.gain.setValueAtTime(
-                0,
-                noteStart
-            );
-
-            noteGain.gain.linearRampToValueAtTime(
-                1,
-                noteStart + 0.02
-            );
-
-            noteGain.gain.setValueAtTime(
-                1,
-                noteEnd - 0.08
-            );
-
-            noteGain.gain.linearRampToValueAtTime(
-                0,
-                noteEnd - 0.01
-            );
-
-            osc.connect(noteGain);
-
-            noteGain.connect(melodyGain);
-
-            osc.start(noteStart);
-
-            osc.stop(noteEnd + 0.02);
-
-            bgmActiveOscillators.push(osc);
-
-            offset += note.dur;
-
-        });
-
-
-        /*
-            아주 낮은 음으로 은은하게 화성을 받쳐주는
-            지속음 (Db3)
-        */
-
-        const bassOsc =
-            ctx.createOscillator();
-
-        bassOsc.type = "sine";
-
-        bassOsc.frequency.value =
-            BGM_BASS_FREQ;
-
-        const bassGain =
-            ctx.createGain();
-
-        bassGain.gain.value = 0.02;
-
-        bassOsc.connect(bassGain);
-
-        bassGain.connect(ctx.destination);
-
-        bassOsc.start(startTime);
-
-        bassOsc.stop(startTime + offset + 0.05);
-
-        bgmActiveOscillators.push(bassOsc);
-
-
-        bgmNodes = {
-            melodyGain,
-            bassGain
-        };
-
-        bgmLoopTimeoutId =
-            setTimeout(() => {
-
-                scheduleClairDeLuneLoop();
-
-            }, offset * 1000);
 
     } catch (error) {
 
@@ -614,42 +486,11 @@ function scheduleClairDeLuneLoop() {
 }
 
 
-function startBackgroundMusic() {
-
-    bgmShouldPlay = true;
-
-    if (!soundEnabled) {
-
-        return;
-
-    }
-
-    if (bgmNodes) {
-
-        return;
-
-    }
-
-    scheduleClairDeLuneLoop();
-
-}
-
-
 function stopBackgroundMusicNodes() {
-
-    if (bgmLoopTimeoutId) {
-
-        clearTimeout(bgmLoopTimeoutId);
-
-        bgmLoopTimeoutId = null;
-
-    }
 
     try {
 
-        bgmActiveOscillators.forEach(
-            osc => osc.stop()
-        );
+        bgmAudioElement.pause();
 
     } catch (error) {
 
@@ -660,11 +501,9 @@ function stopBackgroundMusicNodes() {
 
     }
 
-    bgmActiveOscillators = [];
-
-    bgmNodes = null;
-
 }
+
+
 
 
 /* =========================================================
@@ -1448,6 +1287,9 @@ const scoreHistoryButton =
 
 const soundToggleButton =
     document.getElementById("sound-toggle-button");
+
+const bgmAudioElement =
+    document.getElementById("bgm-audio");
 
 const scoreHistoryOverlayElement =
     document.getElementById("score-history-overlay");
