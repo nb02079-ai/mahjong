@@ -21,6 +21,32 @@ const DEAD_WALL_SIZE = 5;
 
 const TOTAL_STAGES = 5;
 
+
+/*
+    타임어택 모드 설정
+
+    실제 시계로 30초를 재는 모드. 시작패는 시간제한 없이
+    "2장 중 1장" 드래프트로 직접 골라 구성하고,
+    드래프트가 끝나면 그때부터 30초가 시작된다.
+    (30초라는 극단적 제약을 보완하기 위한 난이도 완화 장치)
+*/
+
+const TIME_ATTACK_SECONDS = 30;
+
+const TIME_ATTACK_MAX_TURNS = 999;
+
+let timeAttackTimeRemaining = TIME_ATTACK_SECONDS;
+
+let timeAttackTimerId = null;
+
+let timeAttackPaused = false;
+
+let timeAttackPhase = "draft";
+
+let draftRemainingPicks = 13;
+
+let draftCandidates = null;
+
 const SHOP_ITEMS = [
     {
         id: "extraTurns",
@@ -1269,6 +1295,14 @@ let mulliganTokensRemaining = 0;
 let tsumoPeekTokensRemaining = 0;
 
 /*
+    멀리건권: 손패 중 원하는 만큼 골라서
+    그것만 교체하는 모드의 상태
+*/
+
+let mulliganModeActive = false;
+let mulliganSelectedIndices = [];
+
+/*
     버림패 회수권/쯔모 투시권은 사서 가지고 있다고
     자동으로 발동되지 않고, 전용 버튼을 눌러
     "활성화"해야 그 순간부터 실제로 쓸 수 있다.
@@ -1389,6 +1423,12 @@ const discardHistoryButton =
 const mulliganButton =
     document.getElementById("mulligan-button");
 
+const mulliganConfirmButton =
+    document.getElementById("mulligan-confirm-button");
+
+const mulliganCancelButton =
+    document.getElementById("mulligan-cancel-button");
+
 const discardRetrieveArmButton =
     document.getElementById("discard-retrieve-arm-button");
 
@@ -1463,6 +1503,30 @@ const coinsInfoBoxElement =
 
 const coinsValueElement =
     document.getElementById("coins-value");
+
+const startTimeAttackButton =
+    document.getElementById("start-time-attack-button");
+
+const turnsLeftInfoBoxElement =
+    document.getElementById("turns-left-info-box");
+
+const timeAttackInfoBoxElement =
+    document.getElementById("time-attack-info-box");
+
+const timeAttackValueElement =
+    document.getElementById("time-attack-value");
+
+const pauseButton =
+    document.getElementById("pause-button");
+
+const beginTimeAttackButton =
+    document.getElementById("begin-time-attack-button");
+
+const pauseOverlayElement =
+    document.getElementById("pause-overlay");
+
+const resumeButton =
+    document.getElementById("resume-button");
 
 const shopOverlayElement =
     document.getElementById("shop-overlay");
@@ -1616,6 +1680,12 @@ function startGame() {
 
     }
 
+    if (gameMode === "timeattack") {
+
+        MAX_TURNS = TIME_ATTACK_MAX_TURNS;
+
+    }
+
     updateStageHud();
 
 
@@ -1628,6 +1698,30 @@ function startGame() {
     shuffle(wall);
 
     createDeadWall();
+
+    if (gameMode === "timeattack") {
+
+        timeAttackPhase = "draft";
+
+        timeAttackPaused = false;
+
+        timeAttackTimeRemaining = TIME_ATTACK_SECONDS;
+
+        draftRemainingPicks = 13;
+
+        draftCandidates = null;
+
+        renderAll();
+
+        setStatus(
+            "시작패 만들기: 2장 중 1장을 골라주세요."
+        );
+
+        offerNextDraftPair();
+
+        return;
+
+    }
 
     drawInitialHand();
 
@@ -1646,6 +1740,264 @@ function startGame() {
         drawTile();
 
     }, 300);
+}
+
+
+/* =========================================================
+   타임어택 시작패 드래프트 (2장 중 1장 선택, 13회 반복)
+========================================================= */
+
+function offerNextDraftPair() {
+
+    if (draftRemainingPicks <= 0) {
+
+        finishHandDraft();
+
+        return;
+
+    }
+
+    const first =
+        drawFromWall();
+
+    const second =
+        drawFromWall();
+
+    if (!first || !second) {
+
+        finishHandDraft();
+
+        return;
+
+    }
+
+    draftCandidates = [first, second];
+
+    renderAll();
+
+}
+
+
+function chooseDraftTile(index) {
+
+    if (!draftCandidates) {
+
+        return;
+
+    }
+
+    const chosen =
+        draftCandidates[index];
+
+    const other =
+        draftCandidates[1 - index];
+
+    playerHand.push(chosen);
+
+    wall.push(other);
+
+    shuffle(wall);
+
+    draftCandidates = null;
+
+    draftRemainingPicks--;
+
+    renderAll();
+
+    offerNextDraftPair();
+
+}
+
+
+function finishHandDraft() {
+
+    playerHand =
+        sortHand(playerHand);
+
+    revealInitialDora();
+
+    timeAttackPhase = "playing";
+
+    renderAll();
+
+    setStatus(
+        "시작패 완성! \"타임어택 시작\" 버튼을 누르면 " +
+        `${TIME_ATTACK_SECONDS}초가 시작돼요.`
+    );
+
+}
+
+
+function beginTimeAttackClock() {
+
+    if (
+        gameMode !== "timeattack" ||
+        timeAttackPhase !== "playing" ||
+        timeAttackTimerId !== null
+    ) {
+
+        return;
+
+    }
+
+    timeAttackTimerId =
+        setInterval(() => {
+
+            if (timeAttackPaused) {
+
+                return;
+
+            }
+
+            timeAttackTimeRemaining--;
+
+            updateTimeAttackHud();
+
+            if (timeAttackTimeRemaining <= 0) {
+
+                clearInterval(timeAttackTimerId);
+
+                timeAttackTimerId = null;
+
+                endGame(
+                    "제한 시간 30초가 종료되었습니다."
+                );
+
+            }
+
+        }, 1000);
+
+    updateTimeAttackHud();
+
+    setStatus(
+        `${TIME_ATTACK_SECONDS}초 타임어택 시작!`
+    );
+
+    setTimeout(() => {
+
+        drawTile();
+
+    }, 300);
+
+}
+
+
+function toggleTimeAttackPause() {
+
+    if (
+        gameMode !== "timeattack" ||
+        timeAttackPhase !== "playing" ||
+        gameEnded
+    ) {
+
+        return;
+
+    }
+
+    timeAttackPaused = !timeAttackPaused;
+
+    playButtonClickSound();
+
+    updateTimeAttackHud();
+
+    pauseOverlayElement.classList.toggle(
+        "hidden",
+        !timeAttackPaused
+    );
+
+}
+
+
+function stopTimeAttackClock() {
+
+    if (timeAttackTimerId !== null) {
+
+        clearInterval(timeAttackTimerId);
+
+        timeAttackTimerId = null;
+
+    }
+
+    timeAttackPaused = false;
+
+}
+
+
+function updateTimeAttackHud() {
+
+    const isTimeAttack =
+        gameMode === "timeattack";
+
+    if (
+        isTimeAttack &&
+        (
+            timeAttackPhase === "draft" ||
+            timeAttackTimerId === null
+        )
+    ) {
+
+        discardButton.classList.add(
+            "hidden"
+        );
+
+        kanButton.classList.add(
+            "hidden"
+        );
+
+        winButton.classList.add(
+            "hidden"
+        );
+
+    } else if (isTimeAttack) {
+
+        discardButton.classList.remove(
+            "hidden"
+        );
+
+    }
+
+    timeAttackInfoBoxElement.classList.toggle(
+        "hidden",
+        !isTimeAttack
+    );
+
+    turnsLeftInfoBoxElement.classList.toggle(
+        "hidden",
+        isTimeAttack
+    );
+
+    if (isTimeAttack) {
+
+        timeAttackValueElement.textContent =
+            Math.max(0, timeAttackTimeRemaining);
+
+    }
+
+    const showPauseButton =
+        isTimeAttack &&
+        timeAttackPhase === "playing" &&
+        timeAttackTimerId !== null &&
+        !gameEnded;
+
+    pauseButton.classList.toggle(
+        "hidden",
+        !showPauseButton
+    );
+
+    pauseButton.textContent =
+        timeAttackPaused ? "재개" : "일시정지";
+
+    const showBeginButton =
+        isTimeAttack &&
+        timeAttackPhase === "playing" &&
+        timeAttackTimerId === null &&
+        !gameEnded;
+
+    beginTimeAttackButton.classList.toggle(
+        "hidden",
+        !showBeginButton
+    );
+
 }
 
 
@@ -1950,9 +2302,28 @@ function drawFromWall() {
    11. 일반 쯔모
 ========================================================= */
 
+function getTurnCounterText() {
+
+    if (gameMode === "timeattack") {
+
+        return `${turnCount}번째 쯔모`;
+
+    }
+
+    return `${turnCount} / ${MAX_TURNS}번째 쯔모`;
+
+}
+
+
 function drawTile() {
 
     if (gameEnded) {
+
+        return;
+
+    }
+
+    if (timeAttackPaused) {
 
         return;
 
@@ -2039,7 +2410,7 @@ function drawTile() {
             playDrawSound();
 
             setStatus(
-                `${turnCount} / ${MAX_TURNS}번째 쯔모`
+                getTurnCounterText()
             );
 
             renderAll();
@@ -2055,8 +2426,8 @@ function drawTile() {
         peekCandidates = [first, second];
 
         setStatus(
-            `${turnCount} / ${MAX_TURNS}번째 쯔모 - ` +
-            `투시: 둘 중 하나를 선택하세요.`
+            getTurnCounterText() +
+            ` - 투시: 둘 중 하나를 선택하세요.`
         );
 
         renderAll();
@@ -2097,7 +2468,7 @@ function drawTile() {
 
 
     setStatus(
-        `${turnCount} / ${MAX_TURNS}번째 쯔모`
+        getTurnCounterText()
     );
 
 
@@ -2274,6 +2645,30 @@ function selectTile(index) {
 
     }
 
+    if (mulliganModeActive) {
+
+        const existingPosition =
+            mulliganSelectedIndices.indexOf(index);
+
+        if (existingPosition === -1) {
+
+            mulliganSelectedIndices.push(index);
+
+        } else {
+
+            mulliganSelectedIndices.splice(
+                existingPosition,
+                1
+            );
+
+        }
+
+        renderAll();
+
+        return;
+
+    }
+
     drawnTileSelected = false;
 
     selectedTileIndex = index;
@@ -2327,6 +2722,18 @@ function selectDrawnTile() {
 function discardTile() {
 
     if (gameEnded) {
+
+        return;
+
+    }
+
+    if (timeAttackPaused) {
+
+        return;
+
+    }
+
+    if (mulliganModeActive) {
 
         return;
 
@@ -2672,6 +3079,12 @@ function showKanSelection() {
 function declareKan(kanTile) {
 
     if (gameEnded) {
+
+        return;
+
+    }
+
+    if (timeAttackPaused) {
 
         return;
 
@@ -4572,6 +4985,8 @@ function renderAll() {
 
     updateArmButtons();
 
+    updateTimeAttackHud();
+
 }
 
 
@@ -4590,13 +5005,56 @@ function updateMulliganButton() {
 
     mulliganButton.classList.toggle(
         "hidden",
-        !canMulligan
+        !canMulligan || mulliganModeActive
     );
 
     if (canMulligan) {
 
         mulliganButton.textContent =
-            `다시 뽑기 (${mulliganTokensRemaining})`;
+            `패 교체하기 (${mulliganTokensRemaining})`;
+
+    }
+
+
+    const showModeButtons =
+        canMulligan && mulliganModeActive;
+
+    mulliganConfirmButton.classList.toggle(
+        "hidden",
+        !showModeButtons
+    );
+
+    mulliganCancelButton.classList.toggle(
+        "hidden",
+        !showModeButtons
+    );
+
+    if (showModeButtons) {
+
+        mulliganConfirmButton.textContent =
+            mulliganSelectedIndices.length > 0
+                ? `교체 확정 (${mulliganSelectedIndices.length}장)`
+                : "교체 확정";
+
+        mulliganConfirmButton.disabled =
+            mulliganSelectedIndices.length === 0;
+
+    }
+
+
+    if (mulliganModeActive) {
+
+        discardButton.classList.add(
+            "hidden"
+        );
+
+        kanButton.classList.add(
+            "hidden"
+        );
+
+        winButton.classList.add(
+            "hidden"
+        );
 
     }
 
@@ -4687,7 +5145,7 @@ function updateArmButtons() {
 }
 
 
-function performMulligan() {
+function enterMulliganMode() {
 
     if (
         gameMode !== "stage" ||
@@ -4701,17 +5159,71 @@ function performMulligan() {
 
     }
 
+    mulliganModeActive = true;
+
+    mulliganSelectedIndices = [];
+
+    setStatus(
+        "교체할 패를 원하는 만큼 선택한 뒤 " +
+        "\"교체 확정\"을 눌러주세요."
+    );
+
+    renderAll();
+
+}
+
+
+function cancelMulliganMode() {
+
+    mulliganModeActive = false;
+
+    mulliganSelectedIndices = [];
+
+    setStatus(
+        "패 교체를 취소했습니다."
+    );
+
+    renderAll();
+
+}
+
+
+function performPartialMulligan() {
+
+    if (
+        gameMode !== "stage" ||
+        mulliganTokensRemaining <= 0 ||
+        !isFirstTurn ||
+        kanMelds.length > 0 ||
+        gameEnded ||
+        mulliganSelectedIndices.length === 0
+    ) {
+
+        return;
+
+    }
+
 
     /*
-        현재 손패 + 쯔모패를 패산에 되돌리고
-        다시 섞은 뒤 새로 배패한다.
+        선택된 자리의 패들을 손패에서 빼서
+        패산에 돌려놓고, 그만큼 새로 뽑는다.
+        (쯔모패/투시 후보도 들고 있었다면 같이 반환)
     */
 
-    wall.push(...playerHand);
+    const removedTiles =
+        [...mulliganSelectedIndices]
+            .sort((a, b) => b - a)
+            .map(index =>
+                playerHand.splice(index, 1)[0]
+            );
+
+    wall.push(...removedTiles);
 
     if (drawnTile !== null) {
 
         wall.push(drawnTile);
+
+        drawnTile = null;
 
     }
 
@@ -4723,19 +5235,36 @@ function performMulligan() {
 
     }
 
-    playerHand = [];
+    shuffle(wall);
 
-    drawnTile = null;
+    for (let i = 0; i < removedTiles.length; i++) {
+
+        const newTile =
+            drawFromWall();
+
+        if (newTile) {
+
+            playerHand.push(newTile);
+
+        }
+
+    }
+
+    playerHand =
+        sortHand(playerHand);
 
     selectedTileIndex = null;
 
     drawnTileSelected = false;
 
-    shuffle(wall);
-
-    drawInitialHand();
-
     mulliganTokensRemaining--;
+
+    mulliganModeActive = false;
+
+    const replacedCount =
+        mulliganSelectedIndices.length;
+
+    mulliganSelectedIndices = [];
 
     turnCount = 0;
 
@@ -4749,7 +5278,8 @@ function performMulligan() {
     if (shouldPauseForDiscardRetrieve()) {
 
         setStatus(
-            `손패를 다시 뽑았습니다. (남은 멀리건 ${mulliganTokensRemaining}회) ` +
+            `${replacedCount}장을 교체했습니다. ` +
+            `(남은 멀리건권 ${mulliganTokensRemaining}개) ` +
             `버림패에서 가져오거나 "쯔모하기"를 눌러 진행하세요.`
         );
 
@@ -4760,7 +5290,8 @@ function performMulligan() {
     }
 
     setStatus(
-        `손패를 다시 뽑았습니다. (남은 멀리건 ${mulliganTokensRemaining}회)`
+        `${replacedCount}장을 교체했습니다. ` +
+        `(남은 멀리건권 ${mulliganTokensRemaining}개)`
     );
 
 
@@ -4802,11 +5333,23 @@ function renderHand() {
 
             if (
                 index ===
-                selectedTileIndex
+                selectedTileIndex &&
+                !mulliganModeActive
             ) {
 
                 button.classList.add(
                     "selected"
+                );
+
+            }
+
+            if (
+                mulliganModeActive &&
+                mulliganSelectedIndices.includes(index)
+            ) {
+
+                button.classList.add(
+                    "mulligan-marked"
                 );
 
             }
@@ -4878,6 +5421,86 @@ function renderHand() {
 function renderDrawnTile() {
 
     drawnTileElement.innerHTML = "";
+
+
+    if (draftCandidates) {
+
+        const hint =
+            document.createElement("div");
+
+        hint.classList.add(
+            "peek-hint"
+        );
+
+        hint.textContent =
+            `시작패 만들기 (${13 - draftRemainingPicks + 1}/13): ` +
+            "하나를 선택하세요";
+
+        drawnTileElement.appendChild(
+            hint
+        );
+
+
+        const choicesWrapper =
+            document.createElement("div");
+
+        choicesWrapper.classList.add(
+            "peek-choices"
+        );
+
+        draftCandidates.forEach((candidate, index) => {
+
+            const tile =
+                document.createElement("div");
+
+            tile.classList.add(
+                "tile",
+                "drawn",
+                "tile-pop-in",
+                "peek-choice"
+            );
+
+            const suitClass =
+                getSuitClass(candidate);
+
+            if (suitClass) {
+
+                tile.classList.add(
+                    suitClass
+                );
+
+            }
+
+            if (isRedFive(candidate)) {
+
+                tile.classList.add(
+                    "tile-red-five"
+                );
+
+            }
+
+            tile.innerHTML =
+                buildTileSVG(candidate) ||
+                `<span>${candidate}</span>`;
+
+            tile.addEventListener(
+                "click",
+                () => chooseDraftTile(index)
+            );
+
+            choicesWrapper.appendChild(
+                tile
+            );
+
+        });
+
+        drawnTileElement.appendChild(
+            choicesWrapper
+        );
+
+        return;
+
+    }
 
 
     if (peekCandidates) {
@@ -5426,6 +6049,10 @@ function setStatus(message) {
 function endGame(message) {
 
     gameEnded = true;
+
+    stopTimeAttackClock();
+
+    updateTimeAttackHud();
 
     setStatus(message);
 
@@ -6919,7 +7546,19 @@ discardHistoryButton.addEventListener(
 
 mulliganButton.addEventListener(
     "click",
-    performMulligan
+    enterMulliganMode
+);
+
+
+mulliganConfirmButton.addEventListener(
+    "click",
+    performPartialMulligan
+);
+
+
+mulliganCancelButton.addEventListener(
+    "click",
+    cancelMulliganMode
 );
 
 
@@ -7039,6 +7678,42 @@ startStageModeButton.addEventListener(
         startGame();
 
     }
+);
+
+
+startTimeAttackButton.addEventListener(
+    "click",
+    () => {
+
+        playButtonClickSound();
+
+        startBackgroundMusic();
+
+        hideStartScreen();
+
+        gameMode = "timeattack";
+
+        startGame();
+
+    }
+);
+
+
+beginTimeAttackButton.addEventListener(
+    "click",
+    beginTimeAttackClock
+);
+
+
+pauseButton.addEventListener(
+    "click",
+    toggleTimeAttackPause
+);
+
+
+resumeButton.addEventListener(
+    "click",
+    toggleTimeAttackPause
 );
 
 
@@ -7225,6 +7900,12 @@ winButton.addEventListener(
 
         }
 
+        if (timeAttackPaused) {
+
+            return;
+
+        }
+
 
         if (
             drawnTile === null
@@ -7274,6 +7955,10 @@ winButton.addEventListener(
         */
 
         gameEnded = true;
+
+        stopTimeAttackClock();
+
+        updateTimeAttackHud();
 
         discardButton.disabled =
             true;

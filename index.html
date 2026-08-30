@@ -61,9 +61,14 @@
                     <span id="score" class="info-value">0</span>
                 </div>
 
-                <div class="info-box">
+                <div id="turns-left-info-box" class="info-box">
                     <span class="info-label">TURNS LEFT</span>
                     <span id="turns-left" class="info-value">15</span>
+                </div>
+
+                <div id="time-attack-info-box" class="info-box hidden">
+                    <span class="info-label">TIME LEFT</span>
+                    <span id="time-attack-value" class="info-value">30</span>
                 </div>
 
             </div>
@@ -151,7 +156,15 @@
         </button>
 
         <button id="mulligan-button" class="text-link-button mulligan-button hidden">
-            다시 뽑기
+            패 교체하기
+        </button>
+
+        <button id="mulligan-confirm-button" class="text-link-button hidden">
+            교체 확정
+        </button>
+
+        <button id="mulligan-cancel-button" class="text-link-button hidden">
+            취소
         </button>
 
         <button id="discard-retrieve-arm-button" class="text-link-button hidden">
@@ -180,6 +193,10 @@
                     쯔모하기
                 </button>
 
+                <button id="begin-time-attack-button" class="action-button hidden">
+                    타임어택 시작 (30초)
+                </button>
+
             </section>
 
 
@@ -198,6 +215,10 @@
 
                 <button id="win-button" class="action-button win-button hidden">
                     화료
+                </button>
+
+                <button id="pause-button" class="action-button hidden">
+                    일시정지
                 </button>
 
             </section>
@@ -487,6 +508,28 @@
 
 
     <!-- =========================
+         PAUSE OVERLAY
+         (타임어택 모드 일시정지 시 표시)
+    ========================== -->
+
+    <div id="pause-overlay" class="pause-overlay hidden">
+
+        <div class="pause-modal">
+
+            <h2>일시정지</h2>
+
+            <p>일시정지 중에는 타이머가 멈춰요.</p>
+
+            <button id="resume-button" class="action-button">
+                재개
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
          RESULT OVERLAY
          (화료 / 게임 종료 시 표시)
     ========================== -->
@@ -582,6 +625,10 @@
 
                 <button id="start-stage-mode-button" class="action-button">
                     스테이지 모드 시작
+                </button>
+
+                <button id="start-time-attack-button" class="action-button">
+                    30초 타임어택 시작
                 </button>
 
                 <button id="start-history-button" class="text-link-button">
