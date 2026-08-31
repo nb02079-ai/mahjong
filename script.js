@@ -301,11 +301,16 @@ function getStoredBgmVolume() {
         const saved =
             localStorage.getItem(BGM_VOLUME_STORAGE_KEY);
 
-        if (saved !== null) {
+        if (saved !== null && saved !== "") {
 
             const parsed = Number(saved);
 
-            if (!isNaN(parsed)) {
+            if (
+                !isNaN(parsed) &&
+                isFinite(parsed) &&
+                parsed >= 0 &&
+                parsed <= 100
+            ) {
 
                 return parsed;
 
@@ -357,7 +362,10 @@ try {
     const savedSoundPref =
         localStorage.getItem(SOUND_STORAGE_KEY);
 
-    if (savedSoundPref !== null) {
+    if (
+        savedSoundPref === "true" ||
+        savedSoundPref === "false"
+    ) {
 
         soundEnabled = savedSoundPref === "true";
 
