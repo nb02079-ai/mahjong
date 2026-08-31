@@ -1701,6 +1701,15 @@ function startGame() {
 
     if (gameMode === "timeattack") {
 
+        /*
+            "다시 시작"으로 재진입할 때, 만약 이전 타이머가
+            어떤 이유로든 정리되지 않은 채 남아있다면
+            중복으로 돌게 되는 문제가 있을 수 있어서
+            방어적으로 한 번 더 정리한다.
+        */
+
+        stopTimeAttackClock();
+
         timeAttackPhase = "draft";
 
         timeAttackPaused = false;
@@ -1977,7 +1986,8 @@ function updateTimeAttackHud() {
         isTimeAttack &&
         timeAttackPhase === "playing" &&
         timeAttackTimerId !== null &&
-        !gameEnded;
+        !gameEnded &&
+        !timeAttackPaused;
 
     pauseButton.classList.toggle(
         "hidden",
@@ -1985,7 +1995,7 @@ function updateTimeAttackHud() {
     );
 
     pauseButton.textContent =
-        timeAttackPaused ? "재개" : "일시정지";
+        "일시정지";
 
     const showBeginButton =
         isTimeAttack &&
