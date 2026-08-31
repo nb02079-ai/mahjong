@@ -1811,9 +1811,12 @@ function chooseDraftTile(index) {
 
     playerHand.push(chosen);
 
-    wall.push(other);
+    /*
+        선택하지 않은 패는 패산으로 돌아가는 대신
+        버림패 기록에 남는다.
+    */
 
-    shuffle(wall);
+    discardedTiles.push(other);
 
     draftCandidates = null;
 
